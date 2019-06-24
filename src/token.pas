@@ -27,7 +27,7 @@ type
     FIssuer:string;
     FVersion:Integer;
   protected
-    procedure Parse(token:string);
+    procedure Parse(token:string);virtual;
   public
     constructor Create(const Token:string);
     function Expired():Boolean;
@@ -42,8 +42,6 @@ type
 
 implementation
 
-
-
 procedure Split(Delimiter: Char; Str: string; ListOfStrings: TStrings) ;
 begin
    ListOfStrings.Clear;
@@ -51,9 +49,17 @@ begin
    ListOfStrings.DelimitedText   := Str;
 end;
 
+procedure Fetch(var Result:string; Ch:Char);
+var
+  idx:Integer;
+begin
+  idx := Pos(Ch,Result);
+  Delete(Result,1,idx);
+end;
+
 constructor ExceptionToken.CreateWithToken(const Token: string);
 begin
-  inherited Create('exception token');
+  inherited CreateFmt('token: %s', [Self.ClassName]);
   Self.FToken:=Token;
 end;
 
@@ -65,16 +71,7 @@ end;
 
 function TToken.Expired():Boolean;
 begin
-  Result:=True;
-end;
-
-
-procedure Fetch(var Result:string; Ch:Char);
-var
-  idx:Integer;
-begin
-  idx := Pos(Ch,Result);
-  Delete(Result,1,idx);
+  Result:= NowUTC >= Self.FExpirationTime;
 end;
 
 procedure TToken.Parse(Token:string);
@@ -114,8 +111,5 @@ begin
     js.Free;
   end;
 end;
-
-
-
 
 end.
