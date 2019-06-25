@@ -6,7 +6,7 @@ interface
 type
   IAuth = interface(IInterface)
     procedure Login(UserName,Password: string);
-    procedure RefreshTokens(WithToken:string);
+    procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
   end;
 
 
@@ -19,12 +19,15 @@ type
     FAccessToken:TToken;
     FRefreshToken:TToken;
   protected
-    procedure ParseTokens(js:TlkJSONobject);
+    procedure ParseTokens(js:TlkJSONobject; const OnlyAccess:Boolean=False);
+    function ValidToken(Token:TToken):Boolean;
+    procedure SetAccessToken(Token:TToken);
+    procedure SetRefreshToken(Token:TToken);
   public
     constructor Create(client:IHTTPClient; URL:string);
     destructor Destroy; override;
     procedure Login(UserName, Password: string);
-    procedure RefreshTokens(WithToken:string='');
+    procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
     property AccessToken:TToken read FAccessToken;
     property RefreshToken:TToken read FRefreshToken;
   end;
@@ -50,57 +53,101 @@ end;
 
 procedure TAuthManager.Login(UserName, Password: string);
 var
-  req : Request;
   js  : TlkJsonObject;
   params : TStringStream;
 begin
   params := TStringStream.Create('user='+UserName+'&password='+Password);
   try
-
-    //Parameters := TStringSTream.create(UTF8String('param1=Value1&param2=????/???&param3=Value3'),TEncoding.UTF8);
-
-    req:=Request.Post(Self.URL + '/pl/auth/login',params);
-    js := Client.Post(req);
-    if IsError(js) then
-      raise  ExceptionAuth.CreateFromResponse(TErrorResponse.FromJSON(js));
-
-    Self.ParseTokens(js);
+    js := Client.Post(Self.URL + '/pl/auth/login',params, nil);
   finally
     params.Free;
   end;
-    {
-    1.post
 
-    }
-
+  try
+    if IsError(js) then
+      raise  ExceptionAuth.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Self.ParseTokens(js);
+  finally
+    js.Free;
+  end;
 end;
 
-procedure TAuthManager.RefreshTokens(WithToken:string);
+procedure TAuthManager.RefreshTokens(const OnlyAccess:Boolean; const WithToken:string);
+var
+  js  : TlkJsonObject;
+  params : TStringStream;
+  headers: TStringList;
+  RefreshToken: string;
+  ParamsStr: string;
 begin
 
+  RefreshToken := WithToken;
+  if (RefreshToken='') and not Self.ValidToken(Self.RefreshToken) then
+       raise InvalidToken.CreateWithToken(Self.RefreshToken.AsString);
+
+  if RefreshToken='' then
+    RefreshToken := Self.RefreshToken.AsString;
+
+  if OnlyAccess then
+    ParamsStr := 'only_refresh_token=1';
+  params := TStringStream.Create(ParamsStr);
+  headers:= TStringList.Create;
+  headers.Values['token'] := RefreshToken;
+  try
+    js := Client.Post(Self.URL + '/pl/auth/refresh_token',params, headers);
+  finally
+    headers.Free;
+    params.Free;
+  end;
+
+  try
+    if IsError(js) then
+      raise  ExceptionAuth.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Self.ParseTokens(js, OnlyAccess);
+  finally
+    js.Free;
+  end;
 end;
 
-procedure TAuthManager.ParseTokens(js:TlkJSONobject);
+procedure TAuthManager.ParseTokens(js:TlkJSONobject; const OnlyAccess:Boolean);
 var
   jsToken:TlkJSONString;
 begin
-  //TODO: access token optional
-  jsToken:=js.Field['token'] as TlkJSONString;
-  if not Assigned(jsToken) then
-    raise ExceptionFieldJSON.CreateFmt('field "%s" not found',['token']);
-
-  if Assigned(Self.FAccessToken) then
-    Self.FAccessToken.Free;
-  Self.FAccessToken := TToken.Create(jsToken.Value);
-
   jsToken:=js.Field['refresh_token'] as TlkJSONString;
   if not Assigned(jsToken) then
     raise ExceptionFieldJSON.CreateFmt('field "%s" not found',['token']);
 
+  Self.SetRefreshToken(TToken.Create(jsToken.Value));
 
+
+  if OnlyAccess then
+    Exit;
+
+  jsToken:=js.Field['token'] as TlkJSONString;
+  if not Assigned(jsToken) then
+    raise ExceptionFieldJSON.CreateFmt('field "%s" not found',['token']);
+
+  Self.SetAccessToken(TToken.Create(jsToken.Value));
+
+end;
+
+function TAuthManager.ValidToken(Token:TToken):Boolean;
+begin
+  Result := Assigned(Token) and not Token.Expired()
+end;
+
+procedure TAuthManager.SetAccessToken(Token:TToken);
+begin
+  if Assigned(Self.FAccessToken) then
+    Self.FAccessToken.Free;
+  Self.FAccessToken := Token;
+end;
+
+procedure TAuthManager.SetRefreshToken(Token:TToken);
+begin
   if Assigned(Self.FRefreshToken) then
     Self.FRefreshToken.Free;
-  Self.FRefreshToken := TToken.Create(jsToken.Value);
+  Self.FRefreshToken := Token;
 end;
 
 end.
