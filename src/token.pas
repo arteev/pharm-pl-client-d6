@@ -10,7 +10,9 @@ type
   private
     FToken:string;
   public
-    constructor CreateWithToken(const Token: string);
+    constructor CreateWithToken(const Token: string;const Msg: string='');
+    constructor CreateWithTokenFmt(const Token: string;const Msg: string;
+      const Args: array of const);
     property Token:string read FToken;
   end;
 
@@ -27,10 +29,12 @@ type
     FIssuer:string;
     FVersion:Integer;
   protected
+    function GetTypeTokenFromString(const typ:string): TTypeToken;
     procedure Parse(token:string);virtual;
   public
     constructor Create(const Token:string);
     function Expired():Boolean;
+    procedure Validate();
     property AsString:string read FToken;
     property TypeToken:TTypeToken read FTypeToken;
     property ExpirationTime:TDateTime read FExpirationTime;
@@ -57,9 +61,20 @@ begin
   Delete(Result,1,idx);
 end;
 
-constructor ExceptionToken.CreateWithToken(const Token: string);
+constructor ExceptionToken.CreateWithToken(const Token: string;
+  const Msg: string='');
 begin
-  inherited CreateFmt('token: %s', [Self.ClassName]);
+  if Msg ='' then
+    inherited CreateFmt('token: %s', [Self.ClassName])
+  else
+    inherited Create(Msg);
+  Self.FToken:=Token;
+end;
+
+constructor ExceptionToken.CreateWithTokenFmt(const Token, Msg: string;
+  const Args: array of const);
+begin
+  inherited CreateFmt(Msg,Args);
   Self.FToken:=Token;
 end;
 
@@ -72,6 +87,15 @@ end;
 function TToken.Expired():Boolean;
 begin
   Result:= NowUTC >= Self.FExpirationTime;
+end;
+
+function TToken.GetTypeTokenFromString(const typ: string): TTypeToken;
+begin
+  Result := UNKNOWN;
+  if typ='refresh_token' then
+    Result := REFRESH
+  else if typ = 'access_token' then
+    Result := ACCESS;
 end;
 
 procedure TToken.Parse(Token:string);
@@ -103,13 +127,23 @@ begin
   try
     Self.FID := VarToStr(js.Field['jti'].Value);
     Self.FUser := js.Field['u'].Value;
-    Self.FTypeToken:=js.Field['t'].Value;
+    Self.FTypeToken:=Self.GetTypeTokenFromString(js.Field['sub'].Value);
     Self.FExpirationTime := UnixToDateTime(js.Field['exp'].Value);
     Self.FIssuer := js.Field['iss'].Value;
     Self.FVersion := js.Field['v'].Value;
   finally
     js.Free;
   end;
+
+  Self.Validate();
 end;
+
+procedure TToken.Validate();
+begin
+  if Self.FTypeToken = UNKNOWN then
+    raise InvalidToken.CreateWithTokenFmt(Self.FToken,'UNKNOWN type token',[]);
+end;
+
+
 
 end.

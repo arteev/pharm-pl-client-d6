@@ -1,0 +1,143 @@
+unit MainForm;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls;
+
+type
+  TForm1 = class(TForm)
+    grp1: TGroupBox;
+    edtURL: TEdit;
+    lblURL: TLabel;
+    lblUser: TLabel;
+    edtUser: TEdit;
+    edtPassword: TEdit;
+    lblPassword: TLabel;
+    btnCreate: TButton;
+    btnClose: TButton;
+    lblStatus: TLabel;
+    ApplicationEvents1: TApplicationEvents;
+    pcOpers: TPageControl;
+    tsAuth: TTabSheet;
+    btnLogin: TButton;
+    btnRefreshToken: TButton;
+    gpInfo: TGroupBox;
+    lblInfoToken: TLabel;
+    lblInfoRefreshToken: TLabel;
+    edtInfoAccessToken: TEdit;
+    edtInfoRefreshToken: TEdit;
+    gbInfo: TGroupBox;
+    mmoLog: TMemo;
+    chkOnlyAcceess: TCheckBox;
+    procedure btnCreateClick(Sender: TObject);
+    procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
+    procedure FormDestroy(Sender: TObject);
+    procedure btnCloseClick(Sender: TObject);
+    procedure btnLoginClick(Sender: TObject);
+    procedure btnRefreshTokenClick(Sender: TObject);
+  private
+    { Private declarations }
+    FAPI: IAPIProgramLoyality;
+    function GetIsCreatedAPI: Boolean;
+    procedure AddToLog(s:string);
+  public
+    { Public declarations }
+    procedure CreateAPI();
+    procedure CloseAPI();
+    property IsCreatedAPI:Boolean  read GetIsCreatedAPI;
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+{ TForm1 }
+
+procedure TForm1.CreateAPI;
+var
+  params: PAPIParameters;
+begin
+  params := New(PAPIParameters);
+  try
+    params.URL := edtURL.Text;
+    params.User := edtUser.Text;
+    params.Password := edtPassword.Text;
+
+    FAPI:=TAPIProgramLoyality.Create(params);
+  finally
+    Dispose(params);
+  end;
+end;
+
+procedure TForm1.btnCreateClick(Sender: TObject);
+begin
+  CreateAPI();
+end;
+
+function TForm1.GetIsCreatedAPI: Boolean;
+begin
+  Result := FAPI <> nil;
+end;
+
+procedure TForm1.CloseAPI;
+begin
+  FAPI := nil;
+end;
+
+procedure TForm1.ApplicationEvents1Idle(Sender: TObject;
+  var Done: Boolean);
+begin
+  if IsCreatedAPI then
+    lblStatus.Caption := 'OK'
+  else
+    lblStatus.Caption := 'CLOSED';
+  btnCreate.Enabled := not IsCreatedAPI;
+  btnClose.Enabled := IsCreatedAPI;
+  if IsCreatedAPI then begin
+    if FAPI.AccessToken<>nil then edtInfoAccessToken.Text := FAPI.AccessToken.AsString;
+    if FAPI.RefreshToken<>nil then edtInfoRefreshToken.Text := FAPI.RefreshToken.AsString;
+  end else
+  begin
+     edtInfoAccessToken.Text := '';
+     edtInfoRefreshToken.Text := '';
+  end;
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  CloseAPI();
+end;
+
+procedure TForm1.btnCloseClick(Sender: TObject);
+begin
+  CloseAPI();
+end;
+
+procedure TForm1.btnLoginClick(Sender: TObject);
+begin
+  FAPI.Login();
+  AddToLog('ACCESS:  '+FAPI.AccessToken.AsString);
+  AddToLog('REFRESH:  '+FAPI.RefreshToken.AsString);
+
+
+end;
+
+procedure TForm1.AddToLog(s: string);
+begin
+  if mmoLog.Lines.Count = 0 then
+    mmoLog.Lines.Add(s)
+  else
+  mmoLog.Lines.Insert(0,s);
+end;
+
+procedure TForm1.btnRefreshTokenClick(Sender: TObject);
+begin
+ FAPI.RefreshTokens(chkOnlyAcceess.Checked);
+end;
+
+end.

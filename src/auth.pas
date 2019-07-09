@@ -7,6 +7,11 @@ type
   IAuth = interface(IInterface)
     procedure Login(UserName,Password: string);
     procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
+    function GetAccessToken:TToken;
+    function GetRefreshToken():TToken;
+
+    property AccessToken:TToken read GetAccessToken;
+    property RefreshToken:TToken read GetRefreshToken;
   end;
 
 
@@ -28,7 +33,10 @@ type
     destructor Destroy; override;
     procedure Login(UserName, Password: string);
     procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
-    property AccessToken:TToken read FAccessToken;
+    function GetAccessToken():TToken;
+    function GetRefreshToken():TToken;
+
+    property AccessToken:TToken read GetAccessToken;
     property RefreshToken:TToken read FRefreshToken;
   end;
 
@@ -148,6 +156,16 @@ begin
   if Assigned(Self.FRefreshToken) then
     Self.FRefreshToken.Free;
   Self.FRefreshToken := Token;
+end;
+
+function TAuthManager.GetAccessToken: TToken;
+begin
+  Result := Self.FAccessToken;
+end;
+
+function TAuthManager.GetRefreshToken: TToken;
+begin
+  Result := Self.FRefreshToken;
 end;
 
 end.
