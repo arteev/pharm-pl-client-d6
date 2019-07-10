@@ -39,9 +39,15 @@ type
     procedure btnRefreshTokenClick(Sender: TObject);
   private
     { Private declarations }
-    FAPI: IAPIProgramLoyality;
+    FLogID: Integer;
+    FAPI: TAPIProgramLoyality;
     function GetIsCreatedAPI: Boolean;
     procedure AddToLog(s:string);
+
+    //Events
+    procedure OnLoginAPI(api:TAPIProgramLoyality);
+    procedure OnRefreshTokensEvent(api:TAPIProgramLoyality;
+    	const OnlyAccess:boolean);
   public
     { Public declarations }
     procedure CreateAPI();
@@ -72,6 +78,22 @@ begin
   finally
     Dispose(params);
   end;
+  FAPI.OnLogin := Self.OnLoginAPI;
+  FAPI.OnRefreshTokens := Self.OnRefreshTokensEvent;
+end;
+
+procedure TForm1.OnLoginAPI(api:TAPIProgramLoyality);
+begin
+  AddToLog('ACCESS:  '+api.AccessToken.AsString);
+  AddToLog('REFRESH:  '+api.RefreshToken.AsString);
+end;
+
+procedure TForm1.OnRefreshTokensEvent(api:TAPIProgramLoyality;
+	const OnlyAccess:boolean);
+begin
+   AddToLog('NEW ACCESS:  '+api.AccessToken.AsString);
+   if not OnlyAccess then
+	  AddToLog('NEW REFRESH:  '+api.RefreshToken.AsString);
 end;
 
 procedure TForm1.btnCreateClick(Sender: TObject);
@@ -86,7 +108,11 @@ end;
 
 procedure TForm1.CloseAPI;
 begin
-  FAPI := nil;
+  if Assigned(FAPI) then
+  begin
+    FAPI.Free;
+    FAPI := nil;
+  end;
 end;
 
 procedure TForm1.ApplicationEvents1Idle(Sender: TObject;
@@ -98,13 +124,17 @@ begin
     lblStatus.Caption := 'CLOSED';
   btnCreate.Enabled := not IsCreatedAPI;
   btnClose.Enabled := IsCreatedAPI;
+  pcOpers.Enabled := IsCreatedAPI;
+
   if IsCreatedAPI then begin
     if FAPI.AccessToken<>nil then edtInfoAccessToken.Text := FAPI.AccessToken.AsString;
     if FAPI.RefreshToken<>nil then edtInfoRefreshToken.Text := FAPI.RefreshToken.AsString;
+    pcOpers.Font.Color := clWindowText;
   end else
   begin
      edtInfoAccessToken.Text := '';
      edtInfoRefreshToken.Text := '';
+     pcOpers.Font.Color := clInactiveCaption;
   end;
 end;
 
@@ -121,23 +151,20 @@ end;
 procedure TForm1.btnLoginClick(Sender: TObject);
 begin
   FAPI.Login();
-  AddToLog('ACCESS:  '+FAPI.AccessToken.AsString);
-  AddToLog('REFRESH:  '+FAPI.RefreshToken.AsString);
-
-
 end;
 
 procedure TForm1.AddToLog(s: string);
 begin
+  FLogID := FLogID + 1;
   if mmoLog.Lines.Count = 0 then
-    mmoLog.Lines.Add(s)
+    mmoLog.Lines.Add(IntToStr(FLogID)+': '+s)
   else
-  mmoLog.Lines.Insert(0,s);
+  mmoLog.Lines.Insert(0,IntToStr(FLogID)+': '+s);
 end;
 
 procedure TForm1.btnRefreshTokenClick(Sender: TObject);
 begin
- FAPI.RefreshTokens(chkOnlyAcceess.Checked);
+  FAPI.RefreshTokens(chkOnlyAcceess.Checked);
 end;
 
 end.

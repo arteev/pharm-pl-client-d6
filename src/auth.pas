@@ -91,7 +91,10 @@ begin
 
   RefreshToken := WithToken;
   if (RefreshToken='') and not Self.ValidToken(Self.RefreshToken) then
-       raise InvalidToken.CreateWithToken(Self.RefreshToken.AsString);
+  begin
+	if Self.RefreshToken<>nil then RefreshToken := Self.RefreshToken.AsString;
+  	raise InvalidToken.CreateWithToken(RefreshToken);
+  end;
 
   if RefreshToken='' then
     RefreshToken := Self.RefreshToken.AsString;
@@ -141,7 +144,7 @@ end;
 
 function TAuthManager.ValidToken(Token:TToken):Boolean;
 begin
-  Result := Assigned(Token) and not Token.Expired()
+  Result := (Token<>nil) and Assigned(Token) and not Token.Expired()
 end;
 
 procedure TAuthManager.SetAccessToken(Token:TToken);

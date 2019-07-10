@@ -2,7 +2,7 @@ unit api_pl;
 
 interface
 
-uses auth,http,token,IdHTTP;
+uses auth,http,token,IdHTTP, Classes;
 
 type
 
@@ -14,20 +14,15 @@ type
     AuthManager: IAuth;
   end;
 
-  IAPIProgramLoyality = interface
-    function GetAuth():IAuth;
-    property Auth:IAuth read GetAuth;
+  TAPIProgramLoyality=class;
 
-    procedure Login();
-    procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
+  TLoginEvent = procedure(api:TAPIProgramLoyality) of object;
+  TRefreshTokensEvent = procedure(api:TAPIProgramLoyality;
+  	const OnlyAccess:boolean) of object;
 
-    function GetAccessToken():TToken;
-    function GetRefreshToken():TToken;
-    property AccessToken:TToken read GetAccessToken;
-    property RefreshToken:TToken read GetRefreshToken;
-  end;
+
   
-  TAPIProgramLoyality=class(TInterfacedObject,IAPIProgramLoyality)
+  TAPIProgramLoyality=class(TComponent)
   private
     FURL: string;
     FUser: string;
@@ -35,6 +30,8 @@ type
     FAuth: IAuth;
     FHttpClient:IHTTPClient;
     FidClient : TIdHTTP;
+    FOnLogin: TLoginEvent;
+    FOnRefreshTokens: TRefreshTokensEvent;
   protected
     function CreateHTTPClient(IdHTTP:TIdHTTP=nil):IHTTPClient;
   public
@@ -48,7 +45,13 @@ type
     function GetAccessToken():TToken;
     function GetRefreshToken():TToken;
 
-    //property Auth:IAuth read GetAuth;
+    property Auth:IAuth read GetAuth;
+ 	property AccessToken:TToken read GetAccessToken;
+    property RefreshToken:TToken read GetRefreshToken;
+
+    property OnLogin:TLoginEvent read FOnLogin write FOnLogin;
+    property OnRefreshTokens:TRefreshTokensEvent  read FOnRefreshTokens
+    	write FOnRefreshTokens;
   end;
 
 implementation
@@ -70,7 +73,7 @@ begin
   begin
     if FHttpClient=nil then
     begin
-      FidClient := CreateDefaultClient(nil);
+      FidClient := CreateDefaultClient(self);
       FHttpClient := CreateHTTPClient(FidClient);
     end;
     FAuth := TAuthManager.Create(FHttpClient,FURL);
@@ -109,13 +112,17 @@ end;
 
 procedure TAPIProgramLoyality.Login;
 begin
-  FAuth.Login(self.FUser,self.FPassword);
+  FAuth.Login(FUser,FPassword);
+  if Assigned(FOnLogin) then
+    FOnLogin(Self);
 end;
 
 procedure TAPIProgramLoyality.RefreshTokens(const OnlyAccess: Boolean;
   const WithToken: string);
 begin
   self.FAuth.RefreshTokens(OnlyAccess,WithToken);
+  if Assigned(FOnRefreshTokens) then
+    FOnRefreshTokens(Self, OnlyAccess);
 end;
 
 end.

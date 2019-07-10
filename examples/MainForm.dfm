@@ -1,8 +1,8 @@
 object Form1: TForm1
-  Left = 227
-  Top = 244
-  Width = 1305
-  Height = 675
+  Left = 157
+  Top = 227
+  Width = 1109
+  Height = 511
   Caption = 'Form1'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -19,7 +19,7 @@ object Form1: TForm1
     Top = 16
     Width = 577
     Height = 129
-    Caption = #1055#1072#1088#1072#1084#1077#1090#1088#1099
+    Caption = '?????????'
     TabOrder = 0
     object lblURL: TLabel
       Left = 16

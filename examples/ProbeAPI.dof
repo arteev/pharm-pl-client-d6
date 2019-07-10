@@ -45,7 +45,7 @@ OutputDir=
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
-SearchPath=..\src
+SearchPath=..\src;..\vendor\json
 Packages=vcl;rtl;dsnap;dbrtl;inet;inetdb;bdertl;vclx;vcldb;vcldbx;adortl;bdecds;cds;visualclx;visualdbclx;dbexpress;dbxcds;dss;teeui;teedb;tee;ibxpress;vclie;indy;dsnapcrba;dsnapcon;xmlrtl;inetdbbde;inetdbxpress;nmfast;dclOffice2k;qrpt;vclshlctrls;VclSmp;soaprtl;teeqr;webdsnap;websnap
 Conditionals=
 DebugSourceDirs=
@@ -89,5 +89,6 @@ Comments=
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=1
-Item0=..\src
+Count=2
+Item0=..\src;..\vendor\json
+Item1=..\src
