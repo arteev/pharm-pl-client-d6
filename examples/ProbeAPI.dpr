@@ -12,7 +12,8 @@ uses
   token in '..\src\token.pas',
   unix_utils in '..\src\unix_utils.pas',
   api_pl_client in '..\src\api_pl_client.pas',
-  api_template in '..\src\api_template.pas';
+  api_template in '..\src\api_template.pas',
+  api_pl_params in '..\src\api_pl_params.pas';
 
 {$R *.res}
 

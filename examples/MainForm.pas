@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls;
+  Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls, NMURL;
 
 type
   TForm1 = class(TForm)
@@ -33,6 +33,11 @@ type
     chkOnlyAcceess: TCheckBox;
     tsOthers: TTabSheet;
     btnSession: TButton;
+    tsClient: TTabSheet;
+    btnClientInfo: TButton;
+    edtClientInfoPhone: TEdit;
+    NMURL1: TNMURL;
+    lbl1: TLabel;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -40,6 +45,7 @@ type
     procedure btnLoginClick(Sender: TObject);
     procedure btnRefreshTokenClick(Sender: TObject);
     procedure btnSessionClick(Sender: TObject);
+    procedure btnClientInfoClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -63,7 +69,7 @@ var
 
 implementation
 
-uses api_pl_client;
+uses api_pl_client,api_pl_params, api_template;
 
 {$R *.dfm}
 
@@ -176,8 +182,20 @@ procedure TForm1.btnSessionClick(Sender: TObject);
 var
   info : TSessionInfo;
 begin
-  info := FAPI.GetSessionInfo();
+  info := FAPI.GetSessionInfo(nil);
   AddToLog(Format('session info: point enabled:%s',[BoolToStr(info.PointEnabled)]));
+end;
+
+procedure TForm1.btnClientInfoClick(Sender: TObject);
+var
+  info: TClientInfo;
+  params: IAPIParams;
+begin
+  params := TAPIClientInfoParams.Create('',edtClientInfoPhone.Text,'',
+  	true,true,'');
+  info := FAPI.GetClientInfo(params);
+  AddToLog(Format('user info:  %s %s %s phone:%s email:%s ',
+  	[info.FirstName,info.MiddleName,info.LastName, info.Phone,info.Email]));
 end;
 
 end.

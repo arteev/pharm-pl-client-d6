@@ -4,12 +4,30 @@ interface
 uses http,Classes;
 
 type
-  TAPIRequiredParams=record
-  	Token:string;
-    Provider:string;
+
+  IAPIParams = interface
+    procedure ApplyHeaders(strings:TStrings);
+    procedure ApplyParams(strings:TStrings);
   end;
 
-  TAPITemplate =class(TInterfacedObject)
+  IAPIRequiredParams = interface(IAPIParams)
+    function GetExtra():IAPIParams;
+    property Extra:IAPIParams read GetExtra;
+  end;
+
+  TAPIRequiredParams=class(TInterfacedObject,IAPIRequiredParams)
+  	FToken:string;
+    FProvider:string;
+    FExtra: IAPIParams;
+  public
+    constructor	Create(const AProvider,AToken:string;Extra:IAPIParams=nil);
+    destructor Destroy; override;
+    procedure ApplyHeaders(strings:TStrings);
+    procedure ApplyParams(strings:TStrings);
+    function GetExtra():IAPIParams;
+  end;
+
+  TAPITemplate = class(TInterfacedObject)
   protected
   	Client:IHTTPClient;
   	URL:string;
@@ -19,23 +37,11 @@ type
   end;
 
 
-function CreateRequiredParams(const AProvider,AToken:string):TAPIRequiredParams;
-function GetHeadersFromParams(const Params:TAPIRequiredParams):TStrings;
+
 
 implementation
 
-function CreateRequiredParams(const AProvider,AToken:string):TAPIRequiredParams;
-begin
-  Result.Token := AToken;
-  Result.Provider := AProvider;
-end;
 
-function GetHeadersFromParams(const Params:TAPIRequiredParams):TStrings;
-begin
-  Result := TStringList.Create();
-  Result.Values['token'] := Params.Token;
-  Result.Values['provider'] := Params.Provider;
-end;
 
 { TAPITemplate }
 
@@ -49,6 +55,38 @@ destructor TAPITemplate.Destroy;
 begin
   Client := nil;
   inherited Destroy;
+end;
+
+{ TAPIRequiredParams }
+
+procedure TAPIRequiredParams.ApplyHeaders(strings: TStrings);
+begin
+  strings.Values['token'] := FToken;
+  strings.Values['provider'] := FProvider;
+end;
+
+procedure TAPIRequiredParams.ApplyParams(strings: TStrings);
+begin
+  //nothing
+end;
+
+constructor TAPIRequiredParams.Create(const AProvider, AToken: string;
+  Extra: IAPIParams);
+begin
+  FProvider := AProvider;
+  FToken := AToken;
+  FExtra := Extra;
+end;
+
+destructor TAPIRequiredParams.Destroy;
+begin
+  FExtra := nil;
+  inherited;
+end;
+
+function TAPIRequiredParams.GetExtra: IAPIParams;
+begin
+  Result := FExtra;
 end;
 
 end.

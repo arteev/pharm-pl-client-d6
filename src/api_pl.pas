@@ -51,7 +51,8 @@ type
     function GetRefreshToken():TToken;
 
     { API Client }
-    function GetSessionInfo():TSessionInfo;
+    function GetSessionInfo(RequestParameters:IAPIParams):TSessionInfo;
+    function GetClientInfo(RequestParameters:IAPIParams):TClientInfo;
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -123,18 +124,29 @@ begin
   Result := FAuth;
 end;
 
+function TAPIProgramLoyality.GetClientInfo(
+  RequestParameters: IAPIParams): TClientInfo;
+var
+  params: IAPIRequiredParams;  
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.GetClientInfo(params);
+end;
+
 function TAPIProgramLoyality.GetRefreshToken: TToken;
 begin
   Result := FAuth.RefreshToken;
 end;
 
-function TAPIProgramLoyality.GetSessionInfo: TSessionInfo;
+function TAPIProgramLoyality.GetSessionInfo(RequestParameters:IAPIParams): TSessionInfo;
 var
-  params: TAPIRequiredParams;
+  params: IAPIRequiredParams;
 begin
   CheckAccessToken();
-  params.Provider := ProviderSailPlay;
-  params.Token := AccessToken.AsString;
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
   Result:=FAPIClient.GetSessionInfo(params);
 end;
 

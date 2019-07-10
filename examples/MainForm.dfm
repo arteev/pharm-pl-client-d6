@@ -1,8 +1,8 @@
 object Form1: TForm1
-  Left = 532
-  Top = 180
+  Left = 221
+  Top = 247
   Width = 1109
-  Height = 511
+  Height = 513
   Caption = 'Form1'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -48,6 +48,13 @@ object Form1: TForm1
       Width = 43
       Height = 13
       Caption = 'CLOSED'
+    end
+    object lbl1: TLabel
+      Left = 384
+      Top = 88
+      Width = 106
+      Height = 13
+      Caption = 'Russian text: ???????'
     end
     object edtURL: TEdit
       Left = 80
@@ -97,8 +104,8 @@ object Form1: TForm1
     Top = 160
     Width = 569
     Height = 305
-    ActivePage = tsOthers
-    TabIndex = 1
+    ActivePage = tsClient
+    TabIndex = 2
     TabOrder = 1
     object tsAuth: TTabSheet
       Caption = 'Auth'
@@ -141,6 +148,27 @@ object Form1: TForm1
         Caption = 'Session info'
         TabOrder = 0
         OnClick = btnSessionClick
+      end
+    end
+    object tsClient: TTabSheet
+      Caption = 'tsClient'
+      ImageIndex = 2
+      object btnClientInfo: TButton
+        Left = 16
+        Top = 16
+        Width = 75
+        Height = 25
+        Caption = 'Client Info'
+        TabOrder = 0
+        OnClick = btnClientInfoClick
+      end
+      object edtClientInfoPhone: TEdit
+        Left = 104
+        Top = 16
+        Width = 121
+        Height = 21
+        TabOrder = 1
+        Text = '79323293959'
       end
     end
   end
@@ -204,5 +232,9 @@ object Form1: TForm1
     OnIdle = ApplicationEvents1Idle
     Left = 520
     Top = 48
+  end
+  object NMURL1: TNMURL
+    Left = 312
+    Top = 128
   end
 end
