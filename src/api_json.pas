@@ -42,6 +42,7 @@ type
 
 function IsError(js:TlkJSONobject):Boolean;
 function GetValueJSON(js:TlkJSONbase; name:string; default:Variant):Variant;
+function MustField(js:TlkJSONobject;name:string):TlkJSONbase;
 
 implementation
 
@@ -116,5 +117,11 @@ begin
   Result := jsField.Value;
 end;
 
+function MustField(js:TlkJSONobject;name:string):TlkJSONbase;
+begin
+  if js.IndexOfName(name)=-1 then
+  	raise ExceptionFieldJSON.CreateFmt('field "%s" not found',[name]);
+  Result := js.Field[name];
+end;
 
 end.

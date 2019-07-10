@@ -31,12 +31,15 @@ type
     gbInfo: TGroupBox;
     mmoLog: TMemo;
     chkOnlyAcceess: TCheckBox;
+    tsOthers: TTabSheet;
+    btnSession: TButton;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
     procedure btnCloseClick(Sender: TObject);
     procedure btnLoginClick(Sender: TObject);
     procedure btnRefreshTokenClick(Sender: TObject);
+    procedure btnSessionClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -59,6 +62,8 @@ var
   Form1: TForm1;
 
 implementation
+
+uses api_pl_client;
 
 {$R *.dfm}
 
@@ -165,6 +170,14 @@ end;
 procedure TForm1.btnRefreshTokenClick(Sender: TObject);
 begin
   FAPI.RefreshTokens(chkOnlyAcceess.Checked);
+end;
+
+procedure TForm1.btnSessionClick(Sender: TObject);
+var
+  info : TSessionInfo;
+begin
+  info := FAPI.GetSessionInfo();
+  AddToLog(Format('session info: point enabled:%s',[BoolToStr(info.PointEnabled)]));
 end;
 
 end.

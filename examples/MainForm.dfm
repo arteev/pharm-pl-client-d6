@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 157
-  Top = 227
+  Left = 532
+  Top = 180
   Width = 1109
   Height = 511
   Caption = 'Form1'
@@ -19,7 +19,7 @@ object Form1: TForm1
     Top = 16
     Width = 577
     Height = 129
-    Caption = '?????????'
+    Caption = 'Connection parameters'
     TabOrder = 0
     object lblURL: TLabel
       Left = 16
@@ -97,8 +97,8 @@ object Form1: TForm1
     Top = 160
     Width = 569
     Height = 305
-    ActivePage = tsAuth
-    TabIndex = 0
+    ActivePage = tsOthers
+    TabIndex = 1
     TabOrder = 1
     object tsAuth: TTabSheet
       Caption = 'Auth'
@@ -128,6 +128,19 @@ object Form1: TForm1
         Height = 17
         Caption = 'OnlyAcceess'
         TabOrder = 2
+      end
+    end
+    object tsOthers: TTabSheet
+      Caption = 'tsOthers'
+      ImageIndex = 1
+      object btnSession: TButton
+        Left = 16
+        Top = 8
+        Width = 99
+        Height = 25
+        Caption = 'Session info'
+        TabOrder = 0
+        OnClick = btnSessionClick
       end
     end
   end

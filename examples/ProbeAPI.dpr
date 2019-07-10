@@ -10,7 +10,9 @@ uses
   api_pl in '..\src\api_pl.pas',
   http in '..\src\http.pas',
   token in '..\src\token.pas',
-  unix_utils in '..\src\unix_utils.pas';
+  unix_utils in '..\src\unix_utils.pas',
+  api_pl_client in '..\src\api_pl_client.pas',
+  api_template in '..\src\api_template.pas';
 
 {$R *.res}
 

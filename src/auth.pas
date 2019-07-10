@@ -46,7 +46,7 @@ implementation
 constructor TAuthManager.Create(client:IHTTPClient; URL:string);
 begin
   self.Client := client;
-  Self.URL := URL;
+  self.URL := URL;
 end;
 
 destructor TAuthManager.Destroy;

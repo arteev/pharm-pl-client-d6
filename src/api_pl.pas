@@ -2,7 +2,7 @@ unit api_pl;
 
 interface
 
-uses auth,http,token,IdHTTP, Classes;
+uses auth,http,token,IdHTTP, Classes, api_pl_client, api_template, SysUtils;
 
 type
 
@@ -13,6 +13,8 @@ type
     Password:string;
     AuthManager: IAuth;
   end;
+
+  ExceptionEmptyToken=class(Exception);
 
   TAPIProgramLoyality=class;
 
@@ -28,22 +30,28 @@ type
     FUser: string;
     FPassword: string;
     FAuth: IAuth;
+    FAPIClient:IAPIClient; 
     FHttpClient:IHTTPClient;
     FidClient : TIdHTTP;
     FOnLogin: TLoginEvent;
     FOnRefreshTokens: TRefreshTokensEvent;
   protected
     function CreateHTTPClient(IdHTTP:TIdHTTP=nil):IHTTPClient;
+    procedure CheckAccessToken();
   public
     constructor Create(params: PAPIParameters);
     destructor Destroy();override;
 
     function GetAuth():IAuth;
 
+    { API Auth }
     procedure Login();
     procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
     function GetAccessToken():TToken;
     function GetRefreshToken():TToken;
+
+    { API Client }
+    function GetSessionInfo():TSessionInfo;
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -57,6 +65,12 @@ type
 implementation
 
 { TAPIProgramLoyality }
+
+procedure TAPIProgramLoyality.CheckAccessToken;
+begin
+  if AccessToken = nil then
+  	raise ExceptionEmptyToken.Create('empty token');
+end;
 
 constructor TAPIProgramLoyality.Create(params:PAPIParameters);
 begin
@@ -78,6 +92,8 @@ begin
     end;
     FAuth := TAuthManager.Create(FHttpClient,FURL);
   end;
+
+  FAPIClient := TAPIClient.Create(FHttpClient,FURL);
 end;
 
 function TAPIProgramLoyality.CreateHTTPClient(
@@ -90,7 +106,9 @@ destructor TAPIProgramLoyality.Destroy;
 begin
   if Assigned(FidClient) then
     FidClient.Free;
+
   FAuth := nil;
+  FAPIClient := nil;
   FHttpClient := nil;
   inherited;
 end;
@@ -110,6 +128,16 @@ begin
   Result := FAuth.RefreshToken;
 end;
 
+function TAPIProgramLoyality.GetSessionInfo: TSessionInfo;
+var
+  params: TAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params.Provider := ProviderSailPlay;
+  params.Token := AccessToken.AsString;
+  Result:=FAPIClient.GetSessionInfo(params);
+end;
+
 procedure TAPIProgramLoyality.Login;
 begin
   FAuth.Login(FUser,FPassword);
@@ -120,7 +148,7 @@ end;
 procedure TAPIProgramLoyality.RefreshTokens(const OnlyAccess: Boolean;
   const WithToken: string);
 begin
-  self.FAuth.RefreshTokens(OnlyAccess,WithToken);
+  FAuth.RefreshTokens(OnlyAccess,WithToken);
   if Assigned(FOnRefreshTokens) then
     FOnRefreshTokens(Self, OnlyAccess);
 end;
