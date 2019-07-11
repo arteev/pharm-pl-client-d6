@@ -21,6 +21,7 @@ type
   TLoginEvent = procedure(api:TAPIProgramLoyality) of object;
   TRefreshTokensEvent = procedure(api:TAPIProgramLoyality;
   	const OnlyAccess:boolean) of object;
+  TSMSEvent = procedure(api:TAPIProgramLoyality;const SMSCode:string) of object;
 
 
   
@@ -35,6 +36,7 @@ type
     FidClient : TIdHTTP;
     FOnLogin: TLoginEvent;
     FOnRefreshTokens: TRefreshTokensEvent;
+    FOnSMS: TSMSEvent;
   protected
     function CreateHTTPClient(IdHTTP:TIdHTTP=nil):IHTTPClient;
     procedure CheckAccessToken();
@@ -54,6 +56,7 @@ type
     function GetSessionInfo(RequestParameters:IAPIParams):TSessionInfo;
     function GetClientInfo(RequestParameters:IAPIParams):TClientInfo;
     function ClientAdd(RequestParameters:IAPIParams):TClientAddResponse;
+    function ClientSendSMS(RequestParameters:IAPIParams):TClientSMSResponse;
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -62,6 +65,7 @@ type
     property OnLogin:TLoginEvent read FOnLogin write FOnLogin;
     property OnRefreshTokens:TRefreshTokensEvent  read FOnRefreshTokens
     	write FOnRefreshTokens;
+    property OnSMS:TSMSEvent read FOnSMS write FOnSMS;
   end;
 
 implementation
@@ -83,6 +87,20 @@ begin
 	  RequestParameters);
   Result:=FAPIClient.ClientAdd(params);
 end;
+
+function TAPIProgramLoyality.ClientSendSMS(
+  RequestParameters: IAPIParams): TClientSMSResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.ClientSendSMS(params);
+  if Assigned(FOnSMS) then
+  	FOnSMS(Self,Result.Code);
+end;
+
 
 constructor TAPIProgramLoyality.Create(params:PAPIParameters);
 begin

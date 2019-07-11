@@ -55,6 +55,19 @@ type
     procedure ApplyParams(strings: TStrings); override;
   end;
 
+  TAPIClientSendSMSPArams = class(TAPIBaseParams)
+  private
+    FOriginID: string;
+    FPhone: string;
+    FEmail: string;
+    FSMSText: string;
+    FPriority: Integer;
+  public
+    constructor Create(const AOriginID, APhone, AEmail:string;
+    	const ASMSText:string=''; const APriority:Integer=1);
+    procedure ApplyParams(strings: TStrings); override;
+  end;
+
 implementation
 
 var
@@ -147,6 +160,28 @@ begin
   FReferrerPhone:=AReferrerPhone;
   FReferrerEmail:=AReferrerEmail;
   FReferrerPromocode:=AReferrerPromocode;
+end;
+
+{ TAPIClientSendSMSPArams }
+procedure TAPIClientSendSMSPArams.ApplyParams(strings: TStrings);
+begin
+  inherited ApplyParams(strings);
+  AddValue(strings, 'user_phone', FPhone);
+  AddValue(strings, 'origin_user_id', FOriginID);
+  AddValue(strings, 'email', FEmail);
+  AddValue(strings, 'text', FSMSText);
+  if FPriority<>0 then
+	AddValue(strings, 'priority', IntToStr(FPriority));
+end;
+
+constructor TAPIClientSendSMSPArams.Create(const AOriginID, APhone, AEmail,
+	ASMSText: string; const APriority: Integer);
+begin
+  FOriginID := AOriginID;
+  FPhone := APhone;
+  FEmail := AEmail;
+  FSMSText := ASMSText;
+  FPriority := APriority;
 end;
 
 end.

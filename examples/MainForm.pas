@@ -44,6 +44,12 @@ type
     btnClientAdd: TButton;
     dtpBD: TDateTimePicker;
     Label2: TLabel;
+    btnSMS: TButton;
+    edtSMSText: TEdit;
+    edtSMSPriority: TEdit;
+    lblSMS: TLabel;
+    lblPriority: TLabel;
+    lblSMSResponse: TLabel;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -54,6 +60,7 @@ type
     procedure btnClientInfoClick(Sender: TObject);
     procedure btnClientAddClick(Sender: TObject);
     procedure ApplicationEvents1Exception(Sender: TObject; E: Exception);
+    procedure btnSMSClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -64,6 +71,7 @@ type
     //Events
     procedure OnLoginAPI(api: TAPIProgramLoyality);
     procedure OnRefreshTokensEvent(api: TAPIProgramLoyality; const OnlyAccess: boolean);
+    procedure OnSMS(api:TAPIProgramLoyality;const SMSCode:string);
   public
     { Public declarations }
     procedure CreateAPI();
@@ -99,6 +107,7 @@ begin
   end;
   FAPI.OnLogin := Self.OnLoginAPI;
   FAPI.OnRefreshTokens := Self.OnRefreshTokensEvent;
+  FAPI.OnSMS := Self.OnSMS;
 end;
 
 procedure TForm1.OnLoginAPI(api: TAPIProgramLoyality);
@@ -223,12 +232,29 @@ begin
   begin
     ShowMessage(Format('%s'#13#10'Detail: %s'#13#10'code:%s tag:%s', [
       ExceptionApiCall(E).Response.Message,
-      ExceptionApiCall(E).Response.Field['message'],      
+      ExceptionApiCall(E).Response.Field['message'],
       ExceptionApiCall(E).Response.Code,
       ExceptionApiCall(E).Response.Tag]));
     exit;
   end;
   Application.ShowException(E);
+end;
+
+procedure TForm1.btnSMSClick(Sender: TObject);
+var
+  params: IAPIParams;
+  info : TClientSMSResponse;
+begin
+  params := TAPIClientSendSMSPArams.Create('', edtClientInfoPhone.Text, '',
+  edtSMSText.Text,StrToIntDef(edtSMSPriority.Text,0));
+  info:=FAPI.ClientSendSMS(params);
+  AddToLog(Format('sms code: %s', [info.Code]))
+
+end;
+
+procedure TForm1.OnSMS(api: TAPIProgramLoyality; const SMSCode: string);
+begin
+  lblSMSResponse.Caption := SMSCode;
 end;
 
 end.

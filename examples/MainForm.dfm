@@ -174,6 +174,27 @@ object Form1: TForm1
         Height = 13
         Caption = 'Birth Date'
       end
+      object lblSMS: TLabel
+        Left = 112
+        Top = 112
+        Width = 81
+        Height = 13
+        Caption = 'Custom text SMS'
+      end
+      object lblPriority: TLabel
+        Left = 328
+        Top = 112
+        Width = 54
+        Height = 13
+        Caption = 'Priority [1|2]'
+      end
+      object lblSMSResponse: TLabel
+        Left = 112
+        Top = 136
+        Width = 68
+        Height = 13
+        Caption = '<SMS CODE>'
+      end
       object btnClientInfo: TButton
         Left = 16
         Top = 16
@@ -221,6 +242,30 @@ object Form1: TForm1
         Kind = dtkDate
         ParseInput = False
         TabOrder = 4
+      end
+      object btnSMS: TButton
+        Left = 16
+        Top = 112
+        Width = 75
+        Height = 25
+        Caption = 'SendSMS'
+        TabOrder = 5
+        OnClick = btnSMSClick
+      end
+      object edtSMSText: TEdit
+        Left = 200
+        Top = 112
+        Width = 121
+        Height = 21
+        TabOrder = 6
+        Text = 'code:  $[sms_code]'
+      end
+      object edtSMSPriority: TEdit
+        Left = 400
+        Top = 112
+        Width = 73
+        Height = 21
+        TabOrder = 7
       end
     end
   end

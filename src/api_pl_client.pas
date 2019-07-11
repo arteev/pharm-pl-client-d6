@@ -58,12 +58,17 @@ type
     BirthDate: TDateTime;
   end;
 
+  TClientSMSResponse = record
+    Code: string;
+  end;
+
   IAPIClient = interface
 	  // Sessions
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
       // Clients
     function GetClientInfo(reqParams: IAPIRequiredParams): TClientInfo;
     function ClientAdd(reqParams: IAPIRequiredParams):TClientAddResponse;
+    function ClientSendSMS(reqParams: IAPIRequiredParams):TClientSMSResponse;
       // Marketings
       // Purchases
   end;
@@ -72,10 +77,12 @@ type
   private
     function parseClientInfo(js: TlkJSONObject): TClientInfo;
     function parseClientAdd(js: TlkJSONObject): TClientAddResponse;
+    function parseClientSendSMS(js: TlkJSONobject): TClientSMSResponse;
   public
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
     function GetClientInfo(reqParams: IAPIRequiredParams): TClientInfo;
     function ClientAdd(reqParams: IAPIRequiredParams):TClientAddResponse;
+    function ClientSendSMS(reqParams: IAPIRequiredParams):TClientSMSResponse;
   end;
 
 implementation
@@ -234,6 +241,44 @@ begin
   Result.BirthDate := JsStrToDate(GetValueJSON(payload, 'birth_date', ''));
 end;
 
+
+function TAPIClient.ClientSendSMS(
+  reqParams: IAPIRequiredParams): TClientSMSResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+  paramsStr: string;
+  i: integer;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Post(URL + '/pl/clients/sms-code', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Result := parseClientSendSMS(js);
+  finally
+    js.Free;
+  end;
+end;
+
+function TAPIClient.parseClientSendSMS(
+  js: TlkJSONobject): TClientSMSResponse;
+var
+  payload: TlkJsonObject;
+
+begin
+  payload := MustField(js, 'payload') as TlkJSONobject;
+  Result.Code := GetValueJSON(payload, 'sms_code', 0);
+end;
 
 end.
 
