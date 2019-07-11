@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = -4
-  Top = 218
+  Left = 267
+  Top = 220
   Width = 1109
   Height = 513
   Caption = 'Form1'
@@ -153,6 +153,27 @@ object Form1: TForm1
     object tsClient: TTabSheet
       Caption = 'tsClient'
       ImageIndex = 2
+      object Label1: TLabel
+        Left = 104
+        Top = 24
+        Width = 31
+        Height = 13
+        Caption = 'Phone'
+      end
+      object lblEmail: TLabel
+        Left = 104
+        Top = 40
+        Width = 25
+        Height = 13
+        Caption = 'Email'
+      end
+      object Label2: TLabel
+        Left = 104
+        Top = 64
+        Width = 47
+        Height = 13
+        Caption = 'Birth Date'
+      end
       object btnClientInfo: TButton
         Left = 16
         Top = 16
@@ -163,12 +184,43 @@ object Form1: TForm1
         OnClick = btnClientInfoClick
       end
       object edtClientInfoPhone: TEdit
-        Left = 104
+        Left = 160
         Top = 16
         Width = 121
         Height = 21
         TabOrder = 1
-        Text = '79323293959'
+        Text = '79100000001'
+      end
+      object edtEmail: TEdit
+        Left = 160
+        Top = 40
+        Width = 121
+        Height = 21
+        TabOrder = 2
+        Text = 'test_1@example.ru'
+      end
+      object btnClientAdd: TButton
+        Left = 16
+        Top = 48
+        Width = 75
+        Height = 25
+        Caption = 'Client Add'
+        TabOrder = 3
+        OnClick = btnClientAddClick
+      end
+      object dtpBD: TDateTimePicker
+        Left = 160
+        Top = 64
+        Width = 121
+        Height = 21
+        CalAlignment = dtaLeft
+        Date = 29413
+        Time = 29413
+        DateFormat = dfShort
+        DateMode = dmComboBox
+        Kind = dtkDate
+        ParseInput = False
+        TabOrder = 4
       end
     end
   end
@@ -229,6 +281,7 @@ object Form1: TForm1
     end
   end
   object ApplicationEvents1: TApplicationEvents
+    OnException = ApplicationEvents1Exception
     OnIdle = ApplicationEvents1Idle
     Left = 520
     Top = 48

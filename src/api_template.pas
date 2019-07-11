@@ -1,43 +1,41 @@
 unit api_template;
 
 interface
-uses http,Classes;
+
+uses
+  http, Classes;
 
 type
-
   IAPIParams = interface
-    procedure ApplyHeaders(strings:TStrings);
-    procedure ApplyParams(strings:TStrings);
+    procedure ApplyHeaders(strings: TStrings);
+    procedure ApplyParams(strings: TStrings);
   end;
 
   IAPIRequiredParams = interface(IAPIParams)
-    function GetExtra():IAPIParams;
-    property Extra:IAPIParams read GetExtra;
+    function GetExtra(): IAPIParams;
+    property Extra: IAPIParams read GetExtra;
   end;
 
-  TAPIRequiredParams=class(TInterfacedObject,IAPIRequiredParams)
-  	FToken:string;
-    FProvider:string;
+  TAPIRequiredParams = class(TInterfacedObject, IAPIRequiredParams)
+    FToken: string;
+    FProvider: string;
     FExtra: IAPIParams;
   public
-    constructor	Create(const AProvider,AToken:string;Extra:IAPIParams=nil);
+    constructor Create(const AProvider, AToken: string; Extra: IAPIParams = nil);
     destructor Destroy; override;
-    procedure ApplyHeaders(strings:TStrings);
-    procedure ApplyParams(strings:TStrings);
-    function GetExtra():IAPIParams;
+    procedure ApplyHeaders(strings: TStrings);
+    procedure ApplyParams(strings: TStrings);
+    function GetExtra(): IAPIParams;
   end;
 
   TAPITemplate = class(TInterfacedObject)
   protected
-  	Client:IHTTPClient;
-  	URL:string;
+    Client: IHTTPClient;
+    URL: string;
   public
-    constructor Create(client:IHTTPClient; URL:string);
+    constructor Create(client: IHTTPClient; URL: string);
     destructor Destroy; override;
   end;
-
-
-
 
 implementation
 
@@ -53,7 +51,7 @@ end;
 
 destructor TAPITemplate.Destroy;
 begin
-  Client := nil;
+  client := nil;
   inherited Destroy;
 end;
 
@@ -70,8 +68,7 @@ begin
   //nothing
 end;
 
-constructor TAPIRequiredParams.Create(const AProvider, AToken: string;
-  Extra: IAPIParams);
+constructor TAPIRequiredParams.Create(const AProvider, AToken: string; Extra: IAPIParams);
 begin
   FProvider := AProvider;
   FToken := AToken;
@@ -90,3 +87,4 @@ begin
 end;
 
 end.
+

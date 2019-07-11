@@ -53,6 +53,7 @@ type
     { API Client }
     function GetSessionInfo(RequestParameters:IAPIParams):TSessionInfo;
     function GetClientInfo(RequestParameters:IAPIParams):TClientInfo;
+    function ClientAdd(RequestParameters:IAPIParams):TClientAddResponse;
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -71,6 +72,16 @@ procedure TAPIProgramLoyality.CheckAccessToken;
 begin
   if AccessToken = nil then
   	raise ExceptionEmptyToken.Create('empty token');
+end;
+
+function TAPIProgramLoyality.ClientAdd(RequestParameters: IAPIParams):TClientAddResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.ClientAdd(params);
 end;
 
 constructor TAPIProgramLoyality.Create(params:PAPIParameters);
@@ -127,7 +138,7 @@ end;
 function TAPIProgramLoyality.GetClientInfo(
   RequestParameters: IAPIParams): TClientInfo;
 var
-  params: IAPIRequiredParams;  
+  params: IAPIRequiredParams;
 begin
   CheckAccessToken();
   params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,

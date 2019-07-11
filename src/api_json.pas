@@ -91,6 +91,9 @@ end;
 procedure TErrorResponse.Parse(js:TlkJSONobject);
 var
   jError:TlkJSONobject;
+  jFields:TlkJSONobject;
+  i:Integer;
+  sName:string;
 begin
   jError:=js.Field['error'] as TlkJSONobject;
   if not Assigned(jError) then
@@ -99,6 +102,15 @@ begin
   Self.FMessage := GetValueJSON(jError,'message','');
   Self.FCode := GetValueJSON(jError,'code','');
   Self.FTag := GetValueJSON(jError,'tag','');
+  if not IsNullJSON(jError,'fields') then
+  begin
+    jFields:=jError.Field['fields'] as TlkJSONobject;
+    for i:=0 to jFields.Count-1 do
+    begin
+      sName:=jFields.NameOf[i];
+      FFields.Values[sName]:=GetValueJSON(jFields,sName,'');
+    end;
+  end;
   // TODO: parse fields
 end;
 
