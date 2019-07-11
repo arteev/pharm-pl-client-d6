@@ -62,6 +62,10 @@ type
     Code: string;
   end;
 
+  TMarketingCalcCartResponse = record
+    Test:string;
+  end;
+
   IAPIClient = interface
 	  // Sessions
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
@@ -69,7 +73,8 @@ type
     function GetClientInfo(reqParams: IAPIRequiredParams): TClientInfo;
     function ClientAdd(reqParams: IAPIRequiredParams):TClientAddResponse;
     function ClientSendSMS(reqParams: IAPIRequiredParams):TClientSMSResponse;
-      // Marketings
+    // Marketings
+    function MarketingCalcCart(reqParams: IAPIRequiredParams):TMarketingCalcCartResponse;
       // Purchases
   end;
 
@@ -83,6 +88,8 @@ type
     function GetClientInfo(reqParams: IAPIRequiredParams): TClientInfo;
     function ClientAdd(reqParams: IAPIRequiredParams):TClientAddResponse;
     function ClientSendSMS(reqParams: IAPIRequiredParams):TClientSMSResponse;
+    // Marketings
+    function MarketingCalcCart(reqParams: IAPIRequiredParams):TMarketingCalcCartResponse;
   end;
 
 implementation
@@ -278,6 +285,34 @@ var
 begin
   payload := MustField(js, 'payload') as TlkJSONobject;
   Result.Code := GetValueJSON(payload, 'sms_code', 0);
+end;
+
+function TAPIClient.MarketingCalcCart(
+  reqParams: IAPIRequiredParams): TMarketingCalcCartResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+  paramsStr: string;
+  i: integer;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Post(URL + '/pl/marketing/calc-cart', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+
+  finally
+    js.Free;
+  end;
 end;
 
 end.

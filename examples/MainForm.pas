@@ -50,6 +50,8 @@ type
     lblSMS: TLabel;
     lblPriority: TLabel;
     lblSMSResponse: TLabel;
+    tsPurchases: TTabSheet;
+    btnCalcCart: TButton;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -61,6 +63,7 @@ type
     procedure btnClientAddClick(Sender: TObject);
     procedure ApplicationEvents1Exception(Sender: TObject; E: Exception);
     procedure btnSMSClick(Sender: TObject);
+    procedure btnCalcCartClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -255,6 +258,28 @@ end;
 procedure TForm1.OnSMS(api: TAPIProgramLoyality; const SMSCode: string);
 begin
   lblSMSResponse.Caption := SMSCode;
+end;
+
+procedure TForm1.btnCalcCartClick(Sender: TObject);
+var
+  params: IAPIParams;
+  cart :TArrayCartItems;
+  promocodes, cardNumbers: TArrayStrings;
+  info:TMarketingCalcCartResponse;
+begin
+  SetLength(promocodes,1);
+  SetLength(cardNumbers,1);
+  SetLength(Cart,1);
+  promocodes[0] := '123123';
+  cardNumbers[0] := '111222';
+  cart[0].Num := '0';
+  cart[0].SKU := 'item1';
+  cart[0].Price := 1000;
+  cart[0].Quantity := 1;
+  cart[0].DiscountPoints := 0;
+  cart[0].MinPrice := 250;
+  params := TAPIMarketingCartCalcParams.Create(cart,1,promocodes,cardNumbers);
+  info:=FAPI.MarketingCalcCart(params);
 end;
 
 end.

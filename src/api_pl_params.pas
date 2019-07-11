@@ -3,7 +3,7 @@ unit api_pl_params;
 interface
 
 uses
-  api_template, Classes, SysUtils;
+  api_template, Classes, SysUtils, uLkJSON;
 
 type
   TAPIBaseParams = class(TInterfacedObject, IAPIParams)
@@ -55,7 +55,7 @@ type
     procedure ApplyParams(strings: TStrings); override;
   end;
 
-  TAPIClientSendSMSPArams = class(TAPIBaseParams)
+  TAPIClientSendSMSParams = class(TAPIBaseParams)
   private
     FOriginID: string;
     FPhone: string;
@@ -65,6 +65,31 @@ type
   public
     constructor Create(const AOriginID, APhone, AEmail:string;
     	const ASMSText:string=''; const APriority:Integer=1);
+    procedure ApplyParams(strings: TStrings); override;
+  end;
+
+  TArrayStrings = array of string;
+  TCartItem = record
+    Num:string;
+    SKU:string;
+    Price:Double;
+    Quantity:Double;
+    DiscountPoints:Integer;
+    MinPrice:Double;
+  end;
+  TArrayCartItems = array of TCartItem;
+  TAPIMarketingCartCalcParams = class(TAPIBaseParams)
+  private
+    FPromocodes:TArrayStrings;
+    FVerbose:Integer;
+    FCardNumbers:TArrayStrings;
+    FCart:TArrayCartItems;
+  public
+    constructor Create(
+        const ACart:TArrayCartItems;
+	    AVerbose:Integer=0;
+    	APromocodes:TArrayStrings=nil;
+    	ACardNumbers:TArrayStrings=nil);
     procedure ApplyParams(strings: TStrings); override;
   end;
 
@@ -182,6 +207,64 @@ begin
   FEmail := AEmail;
   FSMSText := ASMSText;
   FPriority := APriority;
+end;
+
+{ TAPIMarketingCartCalcParams }
+
+procedure TAPIMarketingCartCalcParams.ApplyParams(strings: TStrings);
+var js:TlkJSONlist;
+	i:Integer;
+    jsCart:TlkJSONobject;
+    jsCartItem:TlkJSONobject;
+begin
+  inherited ApplyParams(strings);
+  AddValue(strings,'verbose',IntToStr(FVerbose));
+  js := TlkJSONlist.Create();
+  try
+    for i:=0 to Length(FPromocodes)-1 do
+      js.Add(TlkJSONstring.Generate(FPromocodes[i]));
+
+    AddValue(strings,'promocodes',TlkJSON.GenerateText(js));
+  finally
+    js.Free;
+  end;
+
+  js := TlkJSONlist.Create();
+  try
+    for i:=0 to Length(FCardNumbers)-1 do
+      js.Add(TlkJSONstring.Generate(FCardNumbers[i]));
+
+    AddValue(strings,'card_numbers',TlkJSON.GenerateText(js));
+  finally
+    js.Free;
+  end;
+
+  jsCart := TlkJSONobject.Create();
+  try
+    for i:=0 to Length(FCart)-1 do
+    begin
+      jsCartItem := TlkJSONobject.Create();
+      jsCartItem.Add('sku', TlkJSONstring.Generate(FCart[i].SKU));
+      jsCartItem.Add('price', TlkJSONnumber.Generate(FCart[i].Price));
+      jsCartItem.Add('quantity', TlkJSONnumber.Generate(FCart[i].Quantity));
+      jsCartItem.Add('discount_points', TlkJSONnumber.Generate(FCart[i].DiscountPoints));
+      jsCartItem.Add('min_price', TlkJSONnumber.Generate(FCart[i].MinPrice));
+      jsCart.Add(FCart[i].Num, jsCartItem);
+    end;
+
+    AddValue(strings,'cart',TlkJSON.GenerateText(jsCart));
+  finally
+    jsCart.Free;
+  end;
+end;
+
+constructor TAPIMarketingCartCalcParams.Create(const ACart: TArrayCartItems;
+  AVerbose: Integer; APromocodes, ACardNumbers: TArrayStrings);
+begin
+  FCart := ACart;
+  FVerbose:=AVerbose;
+  FPromocodes:=APromocodes;
+  FCardNumbers:=ACardNumbers;
 end;
 
 end.

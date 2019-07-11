@@ -57,6 +57,7 @@ type
     function GetClientInfo(RequestParameters:IAPIParams):TClientInfo;
     function ClientAdd(RequestParameters:IAPIParams):TClientAddResponse;
     function ClientSendSMS(RequestParameters:IAPIParams):TClientSMSResponse;
+    function MarketingCalcCart(RequestParameters: IAPIParams):TMarketingCalcCartResponse;
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -184,6 +185,17 @@ begin
   FAuth.Login(FUser,FPassword);
   if Assigned(FOnLogin) then
     FOnLogin(Self);
+end;
+
+function TAPIProgramLoyality.MarketingCalcCart(
+  RequestParameters: IAPIParams): TMarketingCalcCartResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.MarketingCalcCart(params);
 end;
 
 procedure TAPIProgramLoyality.RefreshTokens(const OnlyAccess: Boolean;

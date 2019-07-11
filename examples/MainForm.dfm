@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 267
-  Top = 220
+  Left = 23
+  Top = 504
   Width = 1109
   Height = 513
   Caption = 'Form1'
@@ -104,8 +104,8 @@ object Form1: TForm1
     Top = 160
     Width = 569
     Height = 305
-    ActivePage = tsClient
-    TabIndex = 2
+    ActivePage = tsPurchases
+    TabIndex = 3
     TabOrder = 1
     object tsAuth: TTabSheet
       Caption = 'Auth'
@@ -266,6 +266,19 @@ object Form1: TForm1
         Width = 73
         Height = 21
         TabOrder = 7
+      end
+    end
+    object tsPurchases: TTabSheet
+      Caption = 'tsPurchases'
+      ImageIndex = 3
+      object btnCalcCart: TButton
+        Left = 16
+        Top = 8
+        Width = 75
+        Height = 25
+        Caption = 'btnCalcCart'
+        TabOrder = 0
+        OnClick = btnCalcCartClick
       end
     end
   end
