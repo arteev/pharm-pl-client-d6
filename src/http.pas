@@ -82,7 +82,7 @@ begin
     Self.FidHTTPClient.Get(tryURL, Stream);
 
 
-    Result := TlkJSONstreamed.ParseText(Utf8ToAnsi(Pchar(Stream.Memory))) as TlkJSONobject;
+    Result := TlkJSONstreamed.ParseText(Pchar(Stream.Memory)) as TlkJSONobject;
   finally
     Stream.Free;
   end;

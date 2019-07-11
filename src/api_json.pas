@@ -41,8 +41,12 @@ type
 
 
 function IsError(js:TlkJSONobject):Boolean;
-function GetValueJSON(js:TlkJSONbase; name:string; default:Variant):Variant;
-function MustField(js:TlkJSONobject;name:string):TlkJSONbase;
+function GetValueJSON(js:TlkJSONbase;const name:string; default:Variant):Variant;
+function MustField(js:TlkJSONobject;const name:string):TlkJSONbase;
+function IsNullJSON(js:TlkJSONobject;const name:string):Boolean;
+
+function JsStrToDateTime(const s:string): TDateTime;
+function JsStrToDate(const s:string): TDateTime;
 
 implementation
 
@@ -104,7 +108,7 @@ begin
     and (js.Field['status'] as TlkJSONnumber).Value = 0;
 end;
 
-function GetValueJSON(js:TlkJSONbase; name:string; default:Variant):Variant;
+function GetValueJSON(js:TlkJSONbase;const name:string; default:Variant):Variant;
 var
   jsField:TlkJSONbase;
 begin
@@ -117,11 +121,71 @@ begin
   Result := jsField.Value;
 end;
 
-function MustField(js:TlkJSONobject;name:string):TlkJSONbase;
+function MustField(js:TlkJSONobject;const name:string):TlkJSONbase;
 begin
   if js.IndexOfName(name)=-1 then
   	raise ExceptionFieldJSON.CreateFmt('field "%s" not found',[name]);
   Result := js.Field[name];
 end;
 
+function IsNullJSON(js:TlkJSONobject;const name:string):Boolean;
+begin
+  Result:=True;
+  if js.IndexOfName(name)=-1 then exit;
+  if js.Field[name].SelfType = jsNull then Exit;
+  Result := False; 
+end;
+
+function JsStrToDateTime(const s:string): TDateTime;
+var
+  oldDateFormat : String;
+  oldLongDateFormat : String;
+  oldDateSeparator:Char;
+  oldTimeSeparator:Char;
+begin
+  oldDateFormat:=ShortDateFormat;
+  oldLongDateFormat := LongDateFormat;
+  ShortDateFormat := 'yyyy-mm-dd';
+  LongDateFormat := 'yyyy-mm-dd hh:nn:ss.z';
+  oldDateSeparator:= DateSeparator;
+  oldTimeSeparator:= TimeSeparator;
+  DateSeparator := '-';
+  TimeSeparator := ':';
+  try
+    Result:=StrToDateTime(StringReplace(s,'T',' ',[]));
+  finally
+    ShortDateFormat:=oldDateFormat;
+    LongDateFormat:=oldLongDateFormat;
+    DateSeparator:= oldDateSeparator;
+    TimeSeparator:=oldTimeSeparator;
+  end;
+end;
+
+function JsStrToDate(const s:string): TDateTime;
+var
+  oldDateFormat : String;
+  oldLongDateFormat : String;
+  oldDateSeparator:Char;
+  oldTimeSeparator:Char;
+begin
+  oldDateFormat:=ShortDateFormat;
+  oldLongDateFormat := LongDateFormat;
+  ShortDateFormat := 'yyyy-mm-dd';
+  LongDateFormat := 'yyyy-mm-dd hh:nn:ss.z';
+  oldDateSeparator:= DateSeparator;
+  oldTimeSeparator:= TimeSeparator;
+  DateSeparator := '-';
+  TimeSeparator := ':';
+  try
+    Result:=StrToDate(StringReplace(s,'T',' ',[]));
+  finally
+    ShortDateFormat:=oldDateFormat;
+    LongDateFormat:=oldLongDateFormat;
+    DateSeparator:= oldDateSeparator;
+    TimeSeparator:=oldTimeSeparator;
+  end;
+end;
+
 end.
+
+

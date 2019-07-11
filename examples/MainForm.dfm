@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 221
-  Top = 247
+  Left = -4
+  Top = 218
   Width = 1109
   Height = 513
   Caption = 'Form1'
@@ -50,11 +50,11 @@ object Form1: TForm1
       Caption = 'CLOSED'
     end
     object lbl1: TLabel
-      Left = 384
-      Top = 88
-      Width = 106
+      Left = 368
+      Top = 40
+      Width = 65
       Height = 13
-      Caption = 'Russian text: ???????'
+      Caption = #1053#1072#1078#1084#1080' Login'
     end
     object edtURL: TEdit
       Left = 80
