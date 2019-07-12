@@ -48,6 +48,8 @@ function IsNullJSON(js:TlkJSONobject;const name:string):Boolean;
 function JsStrToDateTime(const s:string): TDateTime;
 function JsStrToDate(const s:string): TDateTime;
 
+function JsStrToDateTimeDef(const s:string;const def:TDateTime): TDateTime;
+
 
 function JsStrToFloatDef(const S: string; const Default: Extended): Extended;
 
@@ -128,7 +130,7 @@ var
   jsField:TlkJSONbase;
 begin
   jsField := js.Field[name];
-  if not Assigned(jsField) then
+  if not Assigned(jsField) or ( jsField.SelfType=jsNull)  then
   begin
     Result:=default;
     Exit;
@@ -151,6 +153,33 @@ begin
   Result := False; 
 end;
 
+function JsStrToDateTimeDef(const s:string;const def:TDateTime): TDateTime;
+var
+  oldDateFormat : String;
+  oldLongDateFormat : String;
+  oldDateSeparator:Char;
+  oldTimeSeparator:Char;
+begin
+
+  oldDateFormat:=ShortDateFormat;
+  oldLongDateFormat := LongDateFormat;
+  ShortDateFormat := 'yyyy-mm-dd';
+  LongDateFormat := 'yyyy-mm-dd hh:nn:ss.z';
+  oldDateSeparator:= DateSeparator;
+  oldTimeSeparator:= TimeSeparator;
+  DateSeparator := '-';
+  TimeSeparator := ':';
+  try
+    Result:=StrToDateTimeDef(StringReplace(s,'T',' ',[]),def);
+  finally
+    ShortDateFormat:=oldDateFormat;
+    LongDateFormat:=oldLongDateFormat;
+    DateSeparator:= oldDateSeparator;
+    TimeSeparator:=oldTimeSeparator;
+  end;
+end;
+
+
 function JsStrToDateTime(const s:string): TDateTime;
 var
   oldDateFormat : String;
@@ -158,6 +187,7 @@ var
   oldDateSeparator:Char;
   oldTimeSeparator:Char;
 begin
+
   oldDateFormat:=ShortDateFormat;
   oldLongDateFormat := LongDateFormat;
   ShortDateFormat := 'yyyy-mm-dd';

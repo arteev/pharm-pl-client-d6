@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 430
-  Top = 435
-  Width = 1109
+  Left = 353
+  Top = 501
+  Width = 994
   Height = 513
   Caption = 'Form1'
   Color = clBtnFace
@@ -278,6 +278,13 @@ object Form1: TForm1
         Height = 13
         Caption = 'Cart ID:'
       end
+      object Label3: TLabel
+        Left = 128
+        Top = 40
+        Width = 51
+        Height = 13
+        Caption = 'Order Num'
+      end
       object btnCalcCart: TButton
         Left = 16
         Top = 8
@@ -288,27 +295,69 @@ object Form1: TForm1
         OnClick = btnCalcCartClick
       end
       object edtPurchaseCartID: TEdit
-        Left = 168
+        Left = 192
         Top = 8
         Width = 121
         Height = 21
         TabOrder = 1
-        Text = '546402435'
       end
       object btnPurchaseNew: TButton
         Left = 16
-        Top = 48
+        Top = 40
         Width = 97
         Height = 25
         Caption = 'Purchase New'
         TabOrder = 2
+        OnClick = btnPurchaseNewClick
+      end
+      object edtOrderNum: TEdit
+        Left = 192
+        Top = 40
+        Width = 121
+        Height = 21
+        TabOrder = 3
+        Text = 'test_order_1'
+      end
+      object btnPurchaseEdit: TButton
+        Left = 16
+        Top = 136
+        Width = 97
+        Height = 25
+        Caption = 'Purchase Edit'
+        TabOrder = 4
+      end
+      object btnPurchaseDelete: TButton
+        Left = 16
+        Top = 168
+        Width = 97
+        Height = 25
+        Caption = 'Purchase Delete'
+        TabOrder = 5
+        OnClick = btnPurchaseDeleteClick
+      end
+      object btnPurchaseGet: TButton
+        Left = 16
+        Top = 72
+        Width = 97
+        Height = 25
+        Caption = 'Purchase Get'
+        TabOrder = 6
+        OnClick = btnPurchaseGetClick
+      end
+      object btnPurchaseConfirm: TButton
+        Left = 16
+        Top = 104
+        Width = 97
+        Height = 25
+        Caption = 'Purchase Confirm'
+        TabOrder = 7
       end
     end
   end
   object gpInfo: TGroupBox
     Left = 608
     Top = 24
-    Width = 473
+    Width = 369
     Height = 121
     Caption = 'API Information'
     TabOrder = 2
@@ -348,14 +397,14 @@ object Form1: TForm1
   object gbInfo: TGroupBox
     Left = 608
     Top = 176
-    Width = 481
+    Width = 369
     Height = 281
     Caption = 'gbInfo'
     TabOrder = 3
     object mmoLog: TMemo
       Left = 2
       Top = 15
-      Width = 477
+      Width = 365
       Height = 264
       Align = alClient
       TabOrder = 0

@@ -103,9 +103,36 @@ type
     Positions:array of TCartPosition;
   end;
 
+  TMarketingActions = array of TMarketingAction;
   TMarketingCalcCartResponse = record
-    PossibleActions:array of TMarketingAction;
+    PossibleActions:TMarketingActions;
     Cart:TCart;
+  end;
+
+  TPurchase = record
+  	IsCompleted: Boolean;
+    StoreDepartmentID: Integer;
+    CompletedDate:TDateTime;
+    OrderNum:string;
+    ID:Integer;
+    PointDelta:Integer;
+    Key:string;
+    UserID:Integer;
+    Date:TDateTime;
+    Pin:string;
+    Price:Double;
+  end;
+
+  TPurchaseResponse = record
+    Purchase:TPurchase;
+    PossibleActions:TMarketingActions;
+    MarketingActionsApplied:TMarketingActions;
+    Cart:TCart;
+  end;
+
+  TPurchaseDeleteResponse = record
+    OrderNum:string;
+    ID:Integer;
   end;
 
   IAPIClient = interface
@@ -117,7 +144,11 @@ type
     function ClientSendSMS(reqParams: IAPIRequiredParams):TClientSMSResponse;
     // Marketings
     function MarketingCalcCart(reqParams: IAPIRequiredParams):TMarketingCalcCartResponse;
-      // Purchases
+    // Purchases
+    function PurchaseNew(reqParams: IAPIRequiredParams):TPurchaseResponse;
+    function PurchaseGet(reqParams: IAPIRequiredParams):TPurchaseResponse;
+    function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
+
   end;
 
   TAPIClient = class(TAPITemplate, IAPIClient)
@@ -126,16 +157,133 @@ type
     function parseClientAdd(js: TlkJSONObject): TClientAddResponse;
     function parseClientSendSMS(js: TlkJSONobject): TClientSMSResponse;
     function parseMarketingCalcCart(js:TlkJSONobject):TMarketingCalcCartResponse;
+
   public
+    function parsePurchaseResponse(js:TlkJSONobject):TPurchaseResponse;
+
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
     function GetClientInfo(reqParams: IAPIRequiredParams): TClientInfo;
     function ClientAdd(reqParams: IAPIRequiredParams):TClientAddResponse;
     function ClientSendSMS(reqParams: IAPIRequiredParams):TClientSMSResponse;
     // Marketings
     function MarketingCalcCart(reqParams: IAPIRequiredParams):TMarketingCalcCartResponse;
+    // Purchases
+    function PurchaseNew(reqParams: IAPIRequiredParams):TPurchaseResponse;
+    function PurchaseGet(reqParams: IAPIRequiredParams):TPurchaseResponse;
+    function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
   end;
 
 implementation
+
+function parsePurchase(js: TlkJSONobject): TPurchase;
+begin
+  Result.IsCompleted := GetValueJSON(js, 'is_completed', False);
+  Result.StoreDepartmentID := StrToInt(GetValueJSON(js, 'store_department_id', '0'));
+  Result.CompletedDate := JsStrToDateTimeDef(GetValueJSON(js, 'completed_date', ''),0);
+  Result.OrderNum := GetValueJSON(js, 'order_num', '');
+  Result.ID := StrToInt(GetValueJSON(js, 'id', 0));
+  Result.PointDelta := StrToInt(GetValueJSON(js, 'points_delta', 0));
+  Result.Key := GetValueJSON(js, 'public_key', '');
+  Result.UserID := StrToInt(GetValueJSON(js, 'user_id', 0));
+  Result.Date := JsStrToDateTimeDef(GetValueJSON(js, 'purchase_date', ''),0);
+  Result.Pin := GetValueJSON(js, 'clerk_pin', '');
+  Result.Price := JsStrToFloatDef(GetValueJSON(js, 'price', '0'), 0);
+end;
+
+function parseMarketingActions(actions:TlkJSONlist):TMarketingActions;
+var
+  action: TlkJSONobject;
+  i:Integer;
+begin
+    SetLength(Result, actions.Count);
+    for i := 0 to actions.Count - 1 do
+    begin
+      action := actions.Child[i] as TlkJSONobject;
+      Result[i].Name := GetValueJSON(action, 'name', '');
+      Result[i].Alias := GetValueJSON(action, 'alias', '');
+      Result[i].ClientMessage := GetValueJSON(action, 'client_msg', '');
+      Result[i].ServiceMessage := GetValueJSON(action, 'service_msg', '');
+    end;
+end;
+
+function parseCart(cart:TlkJSONobject): TCart;
+var
+  positions: TlkJSONList;
+  position: TlkJSONobject;
+  obj:TlkJSONobject;
+  list: TlkJSONlist;
+  i,j: Integer;
+begin
+
+  Result.ID := GetValueJSON(cart, 'id', 0);
+  Result.TotalPrice := JsStrToFloatDef(GetValueJSON(cart, 'total_price', '0'),0);
+  Result.TotalDiscountPointMax := StrToIntDef(GetValueJSON(cart, 'total_discount_points_max', '0'),0);
+  Result.TotalPoints := StrToIntDef(GetValueJSON(cart, 'total_points', '0'),0);
+  Result.PositionsCount := StrToIntDef(GetValueJSON(cart, 'total_points', '0'),0);
+
+  if not IsNullJSON(cart, 'positions') then
+  begin
+  	positions := cart.Field['positions'] as TlkJSONlist;
+    SetLength(Result.Positions,positions.Count);
+    for i := 0 to positions.Count - 1 do
+    begin
+      position := positions.Child[i] as TlkJSONobject;
+
+      with Result.Positions[i] do
+      begin
+        Num := StrToIntDef(GetValueJSON(position, 'num', '0'), 0);
+        Price := JsStrToFloatDef(GetValueJSON(position, 'price', '0'), 0);
+        NewPrice := JsStrToFloatDef(GetValueJSON(position, 'new_price', '0'), 0);
+        Points:= JsStrToFloatDef(GetValueJSON(position, 'points', '0'), 0);
+    	PointsRate:= JsStrToFloatDef(GetValueJSON(position, 'points_rate', '0'), 0);
+        Quantity:= JsStrToFloatDef(GetValueJSON(position, 'quantity', '0'), 0);
+        DiscountPointsMax:=StrToIntDef(GetValueJSON(position, 'discount_points_max', '0'), 0);
+    	MinPrice:=JsStrToFloatDef(GetValueJSON(position, 'min_price', '0'), 0);
+    	DiscountPoints:=StrToIntDef(GetValueJSON(position, 'discount_points', '0'), 0);
+      end;
+
+      if not IsNullJSON(position, 'marketing_actions') then
+      begin
+        list := MustField(position, 'marketing_actions') as TlkJSONlist;
+        SetLength(Result.Positions[i].MarketingActions, list.Count);
+        for j := 0 to list.Count - 1 do
+          Result.Positions[i].MarketingActions[j] := list.getString(j);
+      end;
+
+      if not IsNullJSON(position, 'reverse_points_rate') then
+      begin
+        list := MustField(position, 'reverse_points_rate') as TlkJSONlist;
+        SetLength(Result.Positions[i].ReversePointsRate, list.Count);
+        for j := 0 to list.Count - 1 do
+          Result.Positions[i].ReversePointsRate[j] := list.getString(j);
+      end;
+
+      if not IsNullJSON(position, 'category') then
+      begin
+        obj := MustField(position, 'category') as TlkJSONobject;
+        with Result.Positions[i].Category do
+        begin
+          SKU := GetValueJSON(obj, 'sku', '');
+          ID := StrToIntDef(GetValueJSON(obj, 'id', ''), 0);
+          Name := GetValueJSON(obj, 'name', '');
+        end;
+      end;
+
+      if not IsNullJSON(position, 'product') then
+      begin
+        obj := MustField(position, 'product') as TlkJSONobject;
+        with Result.Positions[i].Product do
+        begin
+          SKU := GetValueJSON(obj, 'sku', '');
+          ID := StrToIntDef(GetValueJSON(obj, 'id', ''), 0);
+          Name := GetValueJSON(obj, 'name', '');
+        end;
+      end;
+    end;
+  end;
+
+end;
+
 
 { TAPIClient }
 
@@ -362,106 +510,120 @@ function TAPIClient.parseMarketingCalcCart(
   js: TlkJSONobject): TMarketingCalcCartResponse;
 var
   payload: TlkJsonObject;
-  actions: TlkJSONlist;
-  action: TlkJSONobject;
-  cart: TlkJSONobject;
-  positions: TlkJSONList;
-  position: TlkJSONobject;
-  obj:TlkJSONobject;
-  list: TlkJSONlist;
-  i,j: Integer;
 begin
   payload := MustField(js, 'payload') as TlkJSONobject;
 
-  //Result.ID := GetValueJSON(payload, 'id', 0);
-
   if not IsNullJSON(payload, 'possible_marketing_actions') then
-  begin
-    actions := payload.Field['possible_marketing_actions'] as TlkJSONlist;
-    SetLength(Result.PossibleActions, actions.Count);
-    for i := 0 to actions.Count - 1 do
-    begin
-      action := actions.Child[i] as TlkJSONobject;
-      Result.PossibleActions[i].Name := GetValueJSON(action, 'name', '');
-      Result.PossibleActions[i].Alias := GetValueJSON(action, 'alias', '');
-      Result.PossibleActions[i].ClientMessage := GetValueJSON(action, 'client_msg', '');
-      Result.PossibleActions[i].ServiceMessage := GetValueJSON(action, 'service_msg', '');
-    end;
+    Result.PossibleActions:=parseMarketingActions(payload.Field['possible_marketing_actions'] as TlkJSONlist);
+
+  Result.Cart := parseCart(MustField(payload, 'cart') as TlkJSONobject);
+end;
+
+function TAPIClient.PurchaseNew(
+  reqParams: IAPIRequiredParams): TPurchaseResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+  i: integer;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Post(URL + '/pl/purchases/new', params, headers);
+  finally
+    params.Free;
+    headers.Free;
   end;
-
-  if IsNullJSON(payload, 'cart') then exit;
-  cart := payload['cart'] as TlkJSONobject;
-  Result.Cart.ID := GetValueJSON(cart, 'id', '');
-  Result.Cart.TotalPrice := JsStrToFloatDef(GetValueJSON(cart, 'total_price', '0'),0);
-  Result.Cart.TotalDiscountPointMax := StrToIntDef(GetValueJSON(cart, 'total_discount_points_max', '0'),0);
-  Result.Cart.TotalPoints := StrToIntDef(GetValueJSON(cart, 'total_points', '0'),0);
-  Result.Cart.PositionsCount := StrToIntDef(GetValueJSON(cart, 'total_points', '0'),0);
-
-  if not IsNullJSON(cart, 'positions') then
-  begin
-  	positions := cart.Field['positions'] as TlkJSONlist;
-    SetLength(Result.Cart.Positions,positions.Count);
-    for i := 0 to positions.Count - 1 do
-    begin
-      position := positions.Child[i] as TlkJSONobject;
-
-      with Result.Cart.Positions[i] do
-      begin
-        Num := StrToIntDef(GetValueJSON(position, 'num', '0'), 0);
-        Price := JsStrToFloatDef(GetValueJSON(position, 'price', '0'), 0);
-        NewPrice := JsStrToFloatDef(GetValueJSON(position, 'new_price', '0'), 0);
-        Points:= JsStrToFloatDef(GetValueJSON(position, 'points', '0'), 0);
-    	PointsRate:= JsStrToFloatDef(GetValueJSON(position, 'points_rate', '0'), 0);
-        Quantity:= JsStrToFloatDef(GetValueJSON(position, 'quantity', '0'), 0);
-        DiscountPointsMax:=StrToIntDef(GetValueJSON(position, 'discount_points_max', '0'), 0);
-    	MinPrice:=JsStrToFloatDef(GetValueJSON(position, 'min_price', '0'), 0);
-    	DiscountPoints:=StrToIntDef(GetValueJSON(position, 'discount_points', '0'), 0);
-      end;
-
-      if not IsNullJSON(position, 'marketing_actions') then
-      begin
-        list := MustField(position, 'marketing_actions') as TlkJSONlist;
-        SetLength(Result.Cart.Positions[i].MarketingActions, list.Count);
-        for j := 0 to list.Count - 1 do
-          Result.Cart.Positions[i].MarketingActions[j] := list.getString(j);
-      end;
-
-      if not IsNullJSON(position, 'reverse_points_rate') then
-      begin
-        list := MustField(position, 'reverse_points_rate') as TlkJSONlist;
-        SetLength(Result.Cart.Positions[i].ReversePointsRate, list.Count);
-        for j := 0 to list.Count - 1 do
-          Result.Cart.Positions[i].ReversePointsRate[j] := list.getString(j);
-      end;
-
-      if not IsNullJSON(position, 'category') then
-      begin
-        obj := MustField(position, 'category') as TlkJSONobject;
-        with Result.Cart.Positions[i].Category do
-        begin
-          SKU := GetValueJSON(obj, 'sku', '');
-          ID := StrToIntDef(GetValueJSON(obj, 'id', ''), 0);
-          Name := GetValueJSON(obj, 'name', '');
-        end;
-      end;
-
-      if not IsNullJSON(position, 'product') then
-      begin
-        obj := MustField(position, 'product') as TlkJSONobject;
-        with Result.Cart.Positions[i].Product do
-        begin
-          SKU := GetValueJSON(obj, 'sku', '');
-          ID := StrToIntDef(GetValueJSON(obj, 'id', ''), 0);
-          Name := GetValueJSON(obj, 'name', '');
-        end;
-      end;
-
-
-
-
-    end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Result := parsePurchaseResponse(js);
+  finally
+    js.Free;
   end;
+end;
 
+function TAPIClient.parsePurchaseResponse(
+  js: TlkJSONobject): TPurchaseResponse;
+var
+  payload: TlkJSONobject;
+  cart: TlkJSONobject;
+begin
+  payload:= MustField(js,'payload') as TlkJSONobject;
+  Result.Purchase := parsePurchase(MustField(payload,'purchase') as TlkJSONobject);
+
+  cart:= MustField(payload,'cart') as TlkJSONobject;
+
+  if not IsNullJSON(cart,'possible_marketing_actions') then
+    Result.PossibleActions := parseMarketingActions(
+      MustField(cart,'possible_marketing_actions') as TlkJSONlist);
+
+  if not IsNullJSON(cart,'marketing_actions_applied') then
+    Result.MarketingActionsApplied := parseMarketingActions(
+      MustField(cart,'marketing_actions_applied') as TlkJSONlist);
+
+  Result.Cart := parseCart(MustField(cart,'cart') as TlkJSONobject);
+end;
+
+function TAPIClient.PurchaseGet(
+  reqParams: IAPIRequiredParams): TPurchaseResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+  i: integer;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Get(URL + '/pl/purchases/get', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Result := parsePurchaseResponse(js);
+  finally
+    js.Free;
+  end;
+end;
+
+
+function TAPIClient.PurchaseDelete(
+  reqParams: IAPIRequiredParams): TPurchaseDeleteResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+  i: integer;
+  payload: TlkJSONobject;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Post(URL + '/pl/purchases/delete', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+	  payload:= MustField(js,'payload') as TlkJSONobject;
+      Result.OrderNum := GetValueJSON(payload,'order_num','');
+      Result.ID := StrToIntDef(GetValueJSON(payload,'id',0),0);
+  finally
+    js.Free;
+  end;
 end;
 
 end.

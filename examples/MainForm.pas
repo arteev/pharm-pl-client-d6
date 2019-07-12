@@ -55,6 +55,12 @@ type
     edtPurchaseCartID: TEdit;
     btnPurchaseNew: TButton;
     lbl2: TLabel;
+    edtOrderNum: TEdit;
+    Label3: TLabel;
+    btnPurchaseEdit: TButton;
+    btnPurchaseDelete: TButton;
+    btnPurchaseGet: TButton;
+    btnPurchaseConfirm: TButton;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -67,6 +73,9 @@ type
     procedure ApplicationEvents1Exception(Sender: TObject; E: Exception);
     procedure btnSMSClick(Sender: TObject);
     procedure btnCalcCartClick(Sender: TObject);
+    procedure btnPurchaseNewClick(Sender: TObject);
+    procedure btnPurchaseGetClick(Sender: TObject);
+    procedure btnPurchaseDeleteClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -285,9 +294,38 @@ begin
   info:=FAPI.MarketingCalcCart(params);
   AddToLog(Format('Card Id: %d', [info.Cart.ID]));
   edtPurchaseCartID.Text := IntToStr(info.Cart.ID);
+end;
 
-  //4: Card Id: 546403765
-  //3: Card Id: 546403761
+procedure TForm1.btnPurchaseNewClick(Sender: TObject);
+var
+  params: IAPIParams;
+  info:TPurchaseResponse;
+begin
+  params := TAPIPurcaseNewParams.Create('',edtClientInfoPhone.Text,'',
+     edtOrderNum.Text,
+     StrToInt(edtPurchaseCartID.Text));
+  info := FAPI.PurchaseNew(params);
+  AddToLog(Format('Created purchase: %d', [info.Purchase.ID]));
+end;
+
+procedure TForm1.btnPurchaseGetClick(Sender: TObject);
+var
+  params: IAPIParams;
+  info:TPurchaseResponse;
+begin
+  params := TAPIPurchaseGetParams.Create(edtOrderNum.Text);
+  info := FAPI.PurchaseGet(params);
+  AddToLog(Format('Got purchase: %d', [info.Purchase.ID]));
+end;
+
+procedure TForm1.btnPurchaseDeleteClick(Sender: TObject);
+var
+  params: IAPIParams;
+  info:TPurchaseDeleteResponse;
+begin
+  params := TAPIPurchaseDeleteParams.Create(edtOrderNum.Text);
+  info := FAPI.PurchaseDelete(params);
+  AddToLog(Format('Deleted purchase: %d', [info.ID]));
 end;
 
 end.

@@ -58,6 +58,10 @@ type
     function ClientAdd(RequestParameters:IAPIParams):TClientAddResponse;
     function ClientSendSMS(RequestParameters:IAPIParams):TClientSMSResponse;
     function MarketingCalcCart(RequestParameters: IAPIParams):TMarketingCalcCartResponse;
+    function PurchaseNew(RequestParameters: IAPIParams):TPurchaseResponse;
+    function PurchaseGet(RequestParameters: IAPIParams):TPurchaseResponse;
+    function PurchaseDelete(RequestParameters: IAPIParams):TPurchaseDeleteResponse;
+
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -196,6 +200,40 @@ begin
   params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
 	  RequestParameters);
   Result:=FAPIClient.MarketingCalcCart(params);
+end;
+
+function TAPIProgramLoyality.PurchaseDelete(
+  RequestParameters: IAPIParams): TPurchaseDeleteResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.PurchaseDelete(params);
+end;
+
+
+function TAPIProgramLoyality.PurchaseGet(
+  RequestParameters: IAPIParams): TPurchaseResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.PurchaseGet(params);
+end;
+
+function TAPIProgramLoyality.PurchaseNew(
+  RequestParameters: IAPIParams): TPurchaseResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.PurchaseNew(params);
 end;
 
 procedure TAPIProgramLoyality.RefreshTokens(const OnlyAccess: Boolean;

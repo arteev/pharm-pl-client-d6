@@ -93,6 +93,45 @@ type
     procedure ApplyParams(strings: TStrings); override;
   end;
 
+  TAPIPurcaseNewParams = class(TAPIBaseParams)
+  private
+    FOriginID: string;
+    FPhone: string;
+    FEmail: string;
+    FOrderNum: string;
+    FCardID: integer;
+    FCart: TArrayCartItems;
+    FPurchaseDepID: Integer;
+    FPurchaseDepOriginID: Integer;
+    FForceComplete: Boolean;
+  public
+    constructor Create(const AOriginID, APhone, AEmail: string;
+      const AOrderNum: string;
+      const ACardID: integer;
+      const ACart: TArrayCartItems = nil;
+      const APurchaseDepID: Integer = 0;
+      const APurchaseDepOriginID: Integer = 0;
+      const AForceComplete: Boolean = False);
+    procedure ApplyParams(strings: TStrings); override;
+  end;
+
+  TAPIPurchaseGetParams = class(TAPIBaseParams)
+  private
+    ForderNum:string;
+  public
+    constructor Create(const AOrderNum:string);
+    procedure ApplyParams(strings: TStrings); override;
+  end;
+
+  TAPIPurchaseDeleteParams = class(TAPIBaseParams)
+  private
+    ForderNum:string;
+    FPurchaseID:Integer;
+  public
+    constructor Create(const AOrderNum:string;APurchaseID:Integer=0);
+    procedure ApplyParams(strings: TStrings); override;
+  end;
+
 implementation
 
 var
@@ -265,6 +304,96 @@ begin
   FVerbose:=AVerbose;
   FPromocodes:=APromocodes;
   FCardNumbers:=ACardNumbers;
+end;
+
+{ TAPIPurcaseNewParams }
+
+procedure TAPIPurcaseNewParams.ApplyParams(strings: TStrings);
+var js:TlkJSONlist;
+	i:Integer;
+    jsCart:TlkJSONobject;
+    jsCartItem:TlkJSONobject;
+begin
+  inherited ApplyParams(strings);
+
+  AddValue(strings, 'user_phone', FPhone);
+  AddValue(strings, 'origin_user_id', FOriginID);
+  AddValue(strings, 'email', FEmail);
+  AddValue(strings, 'order_num', FOrderNum);
+  if FCardID<>0 then
+    AddValue(strings, 'cart_id', IntToStr(FCardID));
+  if FPurchaseDepID<>0 then
+    AddValue(strings, 'purchase_dep_id', IntToStr(FPurchaseDepID));
+  if FPurchaseDepOriginID<>0 then
+    AddValue(strings, 'purchase_dep_origin_id', IntToStr(FPurchaseDepOriginID));
+  if FForceComplete then
+  	AddValue(strings,'force_complete',BoolToStr[FForceComplete]);
+
+  if Length(FCart)>0 then
+  begin
+    js := TlkJSONlist.Create();
+    jsCart := TlkJSONobject.Create();
+    try
+      for i:=0 to Length(FCart)-1 do
+      begin
+        jsCartItem := TlkJSONobject.Create();
+        jsCartItem.Add('sku', TlkJSONstring.Generate(FCart[i].SKU));
+        jsCartItem.Add('price', TlkJSONnumber.Generate(FCart[i].Price));
+        jsCartItem.Add('quantity', TlkJSONnumber.Generate(FCart[i].Quantity));
+        jsCart.Add(FCart[i].Num, jsCartItem);
+      end;
+      AddValue(strings,'cart',TlkJSON.GenerateText(jsCart));
+    finally
+      jsCart.Free;
+    end;
+  end;
+end;
+
+
+constructor TAPIPurcaseNewParams.Create(const AOriginID, APhone, AEmail,
+  AOrderNum: string; const ACardID: integer; const ACart: TArrayCartItems;
+  const APurchaseDepID, APurchaseDepOriginID: Integer;
+  const AForceComplete: Boolean);
+begin
+  FOriginID := AOriginID;
+  FPhone := APhone;
+  FEmail := AEmail;
+  FOrderNum := AOrderNum;
+  FCardID := ACardID;
+  FCart := ACart;
+  FPurchaseDepID := APurchaseDepID;
+  FPurchaseDepOriginID := APurchaseDepOriginID;
+  FForceComplete := AForceComplete;
+end;
+
+{ TAPIPurchaseGetParams }
+
+procedure TAPIPurchaseGetParams.ApplyParams(strings: TStrings);
+begin
+  inherited ApplyParams(strings);
+  AddValue(strings, 'order_num', ForderNum);
+end;
+
+constructor TAPIPurchaseGetParams.Create(const AOrderNum: string);
+begin
+  ForderNum:=AOrderNum;
+end;
+
+{ TAPIPurchaseDeleteParams }
+
+procedure TAPIPurchaseDeleteParams.ApplyParams(strings: TStrings);
+begin
+  inherited ApplyParams(strings);
+  AddValue(strings, 'order_num', ForderNum);
+  if FPurchaseID<>0 then
+    AddValue(strings, 'purchase_id', IntToStr(FPurchaseID));
+end;
+
+constructor TAPIPurchaseDeleteParams.Create(const AOrderNum: string;
+  APurchaseID: Integer);
+begin
+  ForderNum:=AOrderNum;
+  FPurchaseID := APurchaseID;
 end;
 
 end.
