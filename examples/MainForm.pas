@@ -52,6 +52,9 @@ type
     lblSMSResponse: TLabel;
     tsPurchases: TTabSheet;
     btnCalcCart: TButton;
+    edtPurchaseCartID: TEdit;
+    btnPurchaseNew: TButton;
+    lbl2: TLabel;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -280,6 +283,11 @@ begin
   cart[0].MinPrice := 250;
   params := TAPIMarketingCartCalcParams.Create(cart,1,promocodes,cardNumbers);
   info:=FAPI.MarketingCalcCart(params);
+  AddToLog(Format('Card Id: %d', [info.Cart.ID]));
+  edtPurchaseCartID.Text := IntToStr(info.Cart.ID);
+
+  //4: Card Id: 546403765
+  //3: Card Id: 546403761
 end;
 
 end.

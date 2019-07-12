@@ -48,6 +48,9 @@ function IsNullJSON(js:TlkJSONobject;const name:string):Boolean;
 function JsStrToDateTime(const s:string): TDateTime;
 function JsStrToDate(const s:string): TDateTime;
 
+
+function JsStrToFloatDef(const S: string; const Default: Extended): Extended;
+
 implementation
 
 constructor ExceptionResponse.CreateFromResponse(response:TErrorResponse);
@@ -196,6 +199,13 @@ begin
     DateSeparator:= oldDateSeparator;
     TimeSeparator:=oldTimeSeparator;
   end;
+end;
+
+function JsStrToFloatDef(const S: string; const Default: Extended): Extended;
+begin
+  Result := StrToFloatDef(StringReplace(
+  	StringReplace(s,'.',DecimalSeparator,[]),',',DecimalSeparator,[]),
+  	Default);
 end;
 
 end.

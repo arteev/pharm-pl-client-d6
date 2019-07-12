@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 23
-  Top = 504
+  Left = 430
+  Top = 435
   Width = 1109
   Height = 513
   Caption = 'Form1'
@@ -271,14 +271,37 @@ object Form1: TForm1
     object tsPurchases: TTabSheet
       Caption = 'tsPurchases'
       ImageIndex = 3
+      object lbl2: TLabel
+        Left = 128
+        Top = 16
+        Width = 36
+        Height = 13
+        Caption = 'Cart ID:'
+      end
       object btnCalcCart: TButton
         Left = 16
         Top = 8
-        Width = 75
+        Width = 97
         Height = 25
-        Caption = 'btnCalcCart'
+        Caption = 'Calculate Cart'
         TabOrder = 0
         OnClick = btnCalcCartClick
+      end
+      object edtPurchaseCartID: TEdit
+        Left = 168
+        Top = 8
+        Width = 121
+        Height = 21
+        TabOrder = 1
+        Text = '546402435'
+      end
+      object btnPurchaseNew: TButton
+        Left = 16
+        Top = 48
+        Width = 97
+        Height = 25
+        Caption = 'Purchase New'
+        TabOrder = 2
       end
     end
   end
