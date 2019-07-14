@@ -148,7 +148,7 @@ type
     function PurchaseNew(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseGet(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
-
+    function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
   end;
 
   TAPIClient = class(TAPITemplate, IAPIClient)
@@ -171,6 +171,7 @@ type
     function PurchaseNew(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseGet(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
+    function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
   end;
 
 implementation
@@ -557,15 +558,17 @@ begin
 
   cart:= MustField(payload,'cart') as TlkJSONobject;
 
-  if not IsNullJSON(cart,'possible_marketing_actions') then
-    Result.PossibleActions := parseMarketingActions(
-      MustField(cart,'possible_marketing_actions') as TlkJSONlist);
+    if not IsNullJSON(cart,'possible_marketing_actions') then
+      Result.PossibleActions := parseMarketingActions(
+        MustField(cart,'possible_marketing_actions') as TlkJSONlist);
 
-  if not IsNullJSON(cart,'marketing_actions_applied') then
-    Result.MarketingActionsApplied := parseMarketingActions(
-      MustField(cart,'marketing_actions_applied') as TlkJSONlist);
+    if not IsNullJSON(cart,'marketing_actions_applied') then
+      Result.MarketingActionsApplied := parseMarketingActions(
+        MustField(cart,'marketing_actions_applied') as TlkJSONlist);
 
-  Result.Cart := parseCart(MustField(cart,'cart') as TlkJSONobject);
+	if not IsNullJSON(cart,'cart') then
+    	Result.Cart := parseCart(MustField(cart,'cart') as TlkJSONobject);
+
 end;
 
 function TAPIClient.PurchaseGet(
@@ -621,6 +624,33 @@ begin
 	  payload:= MustField(js,'payload') as TlkJSONobject;
       Result.OrderNum := GetValueJSON(payload,'order_num','');
       Result.ID := StrToIntDef(GetValueJSON(payload,'id',0),0);
+  finally
+    js.Free;
+  end;
+end;
+
+function TAPIClient.PurchaseConfirm(
+  reqParams: IAPIRequiredParams): TPurchaseResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+  i: integer;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Post(URL + '/pl/purchases/confirm', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Result := parsePurchaseResponse(js);
   finally
     js.Free;
   end;

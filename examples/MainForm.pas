@@ -76,6 +76,7 @@ type
     procedure btnPurchaseNewClick(Sender: TObject);
     procedure btnPurchaseGetClick(Sender: TObject);
     procedure btnPurchaseDeleteClick(Sender: TObject);
+    procedure btnPurchaseConfirmClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -326,6 +327,17 @@ begin
   params := TAPIPurchaseDeleteParams.Create(edtOrderNum.Text);
   info := FAPI.PurchaseDelete(params);
   AddToLog(Format('Deleted purchase: %d', [info.ID]));
+end;
+
+procedure TForm1.btnPurchaseConfirmClick(Sender: TObject);
+var
+  params: IAPIParams;
+  info:TPurchaseResponse;
+begin
+  params := TAPIPurchaseConfirmParams.Create(edtOrderNum.Text);
+  info := FAPI.PurchaseConfirm(params);
+  AddToLog(Format('Confirm purchase: %d', [info.Purchase.ID]));
+
 end;
 
 end.

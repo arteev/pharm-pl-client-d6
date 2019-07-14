@@ -132,6 +132,19 @@ type
     procedure ApplyParams(strings: TStrings); override;
   end;
 
+  TAPIPurchaseConfirmParams = class (TAPIBaseParams)
+  private
+    ForderNum:string;
+    FPurchaseID:Integer;
+    FNewPrice:Double;
+    FPositons:String;
+  public
+    constructor Create(const AOrderNum:string;APurchaseID:Integer=0;
+    	const ANewPrice:double=0;
+        const APositons:String='');
+    procedure ApplyParams(strings: TStrings); override;
+  end;
+
 implementation
 
 var
@@ -309,7 +322,7 @@ end;
 { TAPIPurcaseNewParams }
 
 procedure TAPIPurcaseNewParams.ApplyParams(strings: TStrings);
-var js:TlkJSONlist;
+var 
 	i:Integer;
     jsCart:TlkJSONobject;
     jsCartItem:TlkJSONobject;
@@ -331,7 +344,6 @@ begin
 
   if Length(FCart)>0 then
   begin
-    js := TlkJSONlist.Create();
     jsCart := TlkJSONobject.Create();
     try
       for i:=0 to Length(FCart)-1 do
@@ -394,6 +406,29 @@ constructor TAPIPurchaseDeleteParams.Create(const AOrderNum: string;
 begin
   ForderNum:=AOrderNum;
   FPurchaseID := APurchaseID;
+end;
+
+{ TAPIPurchaseConfirmParams }
+
+procedure TAPIPurchaseConfirmParams.ApplyParams(strings: TStrings);
+begin
+  inherited ApplyParams(strings);
+  AddValue(strings, 'order_num', ForderNum);
+  if FPurchaseID<>0 then
+    AddValue(strings, 'purchase_id', IntToStr(FPurchaseID));
+  if FNewPrice<>0 then
+    AddValue(strings,'new_price',FloatToStr(FNewPrice));
+  AddValue(strings,'positions',FPositons);
+
+end;
+
+constructor TAPIPurchaseConfirmParams.Create(const AOrderNum: string;
+  APurchaseID: Integer; const ANewPrice: double; const APositons: String);
+begin
+  FOrderNum := AOrderNum;
+  FPurchaseID := APurchaseID;
+  FNewPrice := ANewPrice;
+  FPositons := APositons;
 end;
 
 end.

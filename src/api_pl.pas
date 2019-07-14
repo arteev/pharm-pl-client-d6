@@ -24,14 +24,14 @@ type
   TSMSEvent = procedure(api:TAPIProgramLoyality;const SMSCode:string) of object;
 
 
-  
+
   TAPIProgramLoyality=class(TComponent)
   private
     FURL: string;
     FUser: string;
     FPassword: string;
     FAuth: IAuth;
-    FAPIClient:IAPIClient; 
+    FAPIClient:IAPIClient;
     FHttpClient:IHTTPClient;
     FidClient : TIdHTTP;
     FOnLogin: TLoginEvent;
@@ -61,6 +61,7 @@ type
     function PurchaseNew(RequestParameters: IAPIParams):TPurchaseResponse;
     function PurchaseGet(RequestParameters: IAPIParams):TPurchaseResponse;
     function PurchaseDelete(RequestParameters: IAPIParams):TPurchaseDeleteResponse;
+    function PurchaseConfirm(RequestParameters: IAPIParams):TPurchaseResponse;
 
 
     property Auth:IAuth read GetAuth;
@@ -201,6 +202,20 @@ begin
 	  RequestParameters);
   Result:=FAPIClient.MarketingCalcCart(params);
 end;
+
+function TAPIProgramLoyality.PurchaseConfirm(
+  RequestParameters: IAPIParams): TPurchaseResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.PurchaseConfirm(params);
+end;
+
+
+
 
 function TAPIProgramLoyality.PurchaseDelete(
   RequestParameters: IAPIParams): TPurchaseDeleteResponse;
