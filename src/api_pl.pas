@@ -17,6 +17,8 @@ const MethodLogin='login';
       MethodPurchaseConfirm = 'purchase_confirm';
       MethodPurchaseEdit = 'purchase_edit';
 
+      MethodPurchaseToQueue = 'purchase_to_queue';
+
 type
 
   PAPIParameters = ^APIParameters;
@@ -83,6 +85,8 @@ type
     function PurchaseEdit(RequestParameters: IAPIParams):TPurchaseEditResponse;
 
 
+    { API Queue }
+    procedure PurcaseAddToQueue(RequestParameters: IAPIParams);
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -103,6 +107,13 @@ type
 implementation
 
 { TAPIProgramLoyality }
+
+procedure TAPIProgramLoyality.PurcaseAddToQueue(
+  RequestParameters: IAPIParams);
+begin
+ //TODO:
+ raise Exception.Create('not emplemented');
+end;
 
 procedure TAPIProgramLoyality.CheckAccessToken;
 begin

@@ -66,6 +66,7 @@ type
     idhtp1: TIdHTTP;
     stat1: TStatusBar;
     lblSessionInfo: TLabel;
+    btnPurchaseToQueue: TButton;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -87,6 +88,7 @@ type
     procedure idhtp1Disconnected(Sender: TObject);
     procedure idhtp1Status(axSender: TObject; const axStatus: TIdStatus;
       const asStatusText: String);
+    procedure btnPurchaseToQueueClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -421,6 +423,19 @@ procedure TForm1.OnCallMethodStart(api: TAPIProgramLoyality;
   const method: string);
 begin
   AddToLog('Start '+method);
+end;
+
+procedure TForm1.btnPurchaseToQueueClick(Sender: TObject);
+var
+  params: IAPIParams;
+
+begin
+  params := TAPIPurcaseNewParams.Create('',edtClientInfoPhone.Text,'',
+     edtOrderNum.Text,
+     StrToIntDef(edtPurchaseCartID.Text,0));
+
+  FAPI.PurcaseAddToQueue(params);
+  AddToLog(Format('Added purchase to queue: %s', [edtOrderNum.Text]));
 end;
 
 end.

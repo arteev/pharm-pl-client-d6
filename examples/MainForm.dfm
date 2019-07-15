@@ -104,8 +104,8 @@ object Form1: TForm1
     Top = 160
     Width = 569
     Height = 305
-    ActivePage = tsClient
-    TabIndex = 2
+    ActivePage = tsPurchases
+    TabIndex = 3
     TabOrder = 1
     object tsAuth: TTabSheet
       Caption = 'Auth'
@@ -374,6 +374,15 @@ object Form1: TForm1
         Width = 121
         Height = 21
         TabOrder = 8
+      end
+      object btnPurchaseToQueue: TButton
+        Left = 16
+        Top = 208
+        Width = 121
+        Height = 25
+        Caption = 'Purchase To Queue'
+        TabOrder = 9
+        OnClick = btnPurchaseToQueueClick
       end
     end
   end
