@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls, NMURL;
+  Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls, NMURL, IdBaseComponent,
+  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, http;
 
 type
   TForm1 = class(TForm)
@@ -36,7 +37,6 @@ type
     tsClient: TTabSheet;
     btnClientInfo: TButton;
     edtClientInfoPhone: TEdit;
-    NMURL1: TNMURL;
     lbl1: TLabel;
     edtEmail: TEdit;
     Label1: TLabel;
@@ -61,6 +61,10 @@ type
     btnPurchaseDelete: TButton;
     btnPurchaseGet: TButton;
     btnPurchaseConfirm: TButton;
+    lbl3: TLabel;
+    edtToPhone: TEdit;
+    idhtp1: TIdHTTP;
+    stat1: TStatusBar;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -77,10 +81,16 @@ type
     procedure btnPurchaseGetClick(Sender: TObject);
     procedure btnPurchaseDeleteClick(Sender: TObject);
     procedure btnPurchaseConfirmClick(Sender: TObject);
+    procedure btnPurchaseEditClick(Sender: TObject);
+    procedure idhtp1Connected(Sender: TObject);
+    procedure idhtp1Disconnected(Sender: TObject);
+    procedure idhtp1Status(axSender: TObject; const axStatus: TIdStatus;
+      const asStatusText: String);
   private
     { Private declarations }
     FLogID: Integer;
     FAPI: TAPIProgramLoyality;
+    FHttpClient : IHTTPClient;
     function GetIsCreatedAPI: Boolean;
     procedure AddToLog(s: string);
 
@@ -117,7 +127,10 @@ begin
     params.User := edtUser.Text;
     params.Password := edtPassword.Text;
 
-    FAPI := TAPIProgramLoyality.Create(params);
+    if FHttpClient=nil then
+      FHttpClient := CreateHTTPClient(idhtp1);
+
+    FAPI := TAPIProgramLoyality.Create(params,FHttpClient);
   finally
     Dispose(params);
   end;
@@ -151,11 +164,13 @@ end;
 
 procedure TForm1.CloseAPI;
 begin
+  FHttpClient := nil;
   if Assigned(FAPI) then
   begin
     FAPI.Free;
     FAPI := nil;
   end;
+;
 end;
 
 procedure TForm1.ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
@@ -337,7 +352,33 @@ begin
   params := TAPIPurchaseConfirmParams.Create(edtOrderNum.Text);
   info := FAPI.PurchaseConfirm(params);
   AddToLog(Format('Confirm purchase: %d', [info.Purchase.ID]));
+end;
 
+procedure TForm1.btnPurchaseEditClick(Sender: TObject);
+var
+  params : IAPIParams;
+  info:TPurchaseEditResponse;
+begin
+  params := TAPIPurchaseEditParams.Create(edtOrderNum.Text,edtToPhone.Text);
+  info := FAPI.PurchaseEdit(params);
+  AddToLog(Format('Moved purchase %d to %s', [info.ID,info.User.Phone]));
+
+end;
+
+procedure TForm1.idhtp1Connected(Sender: TObject);
+begin
+  stat1.SimpleText := 'Connected';
+end;
+
+procedure TForm1.idhtp1Disconnected(Sender: TObject);
+begin
+ stat1.SimpleText := 'Disconnected';
+end;
+
+procedure TForm1.idhtp1Status(axSender: TObject; const axStatus: TIdStatus;
+  const asStatusText: String);
+begin
+ stat1.SimpleText := asStatusText;
 end;
 
 end.

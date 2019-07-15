@@ -79,7 +79,8 @@ begin
     Self.FidHTTPClient.Get(tryURL, Stream);
     Stream.Position := 0;
     Result := TlkJSONstreamed.LoadFromStream(Stream) as TlkJSONobject;
-  finally
+    Self.FidHTTPClient.Disconnect;
+  finally                         
     Stream.Free;
   end;
 end;
@@ -103,6 +104,7 @@ begin
     Self.FidHTTPClient.Post(url, Params, Stream);
     Stream.Position := 0;
     Result := TlkJSONstreamed.LoadFromStream(Stream) as TlkJSONobject;
+    Self.FidHTTPClient.Disconnect;
   finally
     Stream.Free;
   end;
@@ -141,6 +143,7 @@ begin
     Self.FidHTTPClient.Post(url, ParamsEncode, Stream);
     Stream.Position := 0;
     Result := TlkJSONstreamed.LoadFromStream(Stream) as TlkJSONobject;
+    Self.FidHTTPClient.Disconnect;
   finally
     if ParamsEncode <> nil then
       ParamsEncode.Free;

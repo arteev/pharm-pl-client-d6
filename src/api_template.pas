@@ -33,7 +33,7 @@ type
     Client: IHTTPClient;
     URL: string;
   public
-    constructor Create(client: IHTTPClient; URL: string);
+    constructor Create(AClient: IHTTPClient; URL: string);
     destructor Destroy; override;
   end;
 
@@ -43,9 +43,9 @@ implementation
 
 { TAPITemplate }
 
-constructor TAPITemplate.Create(client: IHTTPClient; URL: string);
+constructor TAPITemplate.Create(AClient: IHTTPClient; URL: string);
 begin
-  self.Client := client;
+  self.Client := AClient;
   self.URL := URL;
 end;
 

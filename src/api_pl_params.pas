@@ -145,6 +145,23 @@ type
     procedure ApplyParams(strings: TStrings); override;
   end;
 
+  TAPIPurchaseEditParams = class(TAPIBaseParams)
+  private
+    ForderNum: string;
+    FPurchaseID: Integer;
+    FEmail:string;
+    FOriginUserID:string;
+    FUserPhone:string;
+  public
+    constructor Create(const AOrderNum: string; const AUserPhone: string;
+    	const AEmail: string = '';
+        const AOriginUserID: string = '';
+        const APurchaseID: Integer = 0);
+    procedure ApplyParams(strings: TStrings); override;
+  end;
+
+
+
 implementation
 
 var
@@ -429,6 +446,29 @@ begin
   FPurchaseID := APurchaseID;
   FNewPrice := ANewPrice;
   FPositons := APositons;
+end;
+
+{ TAPIPurchaseEditParams }
+
+procedure TAPIPurchaseEditParams.ApplyParams(strings: TStrings);
+begin
+  inherited ApplyParams(strings);
+  AddValue(strings,'order_num',ForderNum);
+  if FPurchaseID>0 then
+    AddValue(strings, 'purchase_id', IntToStr(FPurchaseID));
+  AddValue(strings,'user_phone',FUserPhone);
+  AddValue(strings,'email',FEmail);
+  AddValue(strings,'origin_user_id',FOriginUserID);
+end;
+
+constructor TAPIPurchaseEditParams.Create(const AOrderNum, AUserPhone,
+  AEmail, AOriginUserID: string; const APurchaseID: Integer);
+begin
+  ForderNum := AOrderNum;
+  FUserPhone := AUserPhone;
+  FEmail := AEmail;
+  FOriginUserID := AOriginUserID;
+  FPurchaseID := APurchaseID;
 end;
 
 end.

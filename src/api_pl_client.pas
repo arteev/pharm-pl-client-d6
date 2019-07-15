@@ -135,6 +135,21 @@ type
     ID:Integer;
   end;
 
+  TPurchaseEditResponse = record
+    OrderNum: string;
+    ID: Integer;
+    User: record
+      FullPhone: string;
+      Phone: string;
+      OriginUserID: Integer;
+      LastName: string;
+      FirstName: string;
+      Points: Integer;
+      ID: Integer;
+      Email: string;
+    end;
+  end;
+
   IAPIClient = interface
 	  // Sessions
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
@@ -149,6 +164,7 @@ type
     function PurchaseGet(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
     function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
+    function PurchaseEdit(reqParams: IAPIRequiredParams):TPurchaseEditResponse;
   end;
 
   TAPIClient = class(TAPITemplate, IAPIClient)
@@ -157,9 +173,10 @@ type
     function parseClientAdd(js: TlkJSONObject): TClientAddResponse;
     function parseClientSendSMS(js: TlkJSONobject): TClientSMSResponse;
     function parseMarketingCalcCart(js:TlkJSONobject):TMarketingCalcCartResponse;
+    function parsePurchaseResponse(js:TlkJSONobject):TPurchaseResponse;
+    function parsePurchaseEditResponse(js:TlkJSONobject):TPurchaseEditResponse;
 
   public
-    function parsePurchaseResponse(js:TlkJSONobject):TPurchaseResponse;
 
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
     function GetClientInfo(reqParams: IAPIRequiredParams): TClientInfo;
@@ -172,6 +189,7 @@ type
     function PurchaseGet(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
     function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
+    function PurchaseEdit(reqParams: IAPIRequiredParams):TPurchaseEditResponse;
   end;
 
 implementation
@@ -396,8 +414,6 @@ var
   js: TlkJsonObject;
   headers: TStrings;
   params: TStrings;
-  paramsStr: string;
-  i: integer;
 begin
   headers := TStringList.Create;
   params := TStringList.Create;
@@ -421,11 +437,6 @@ end;
 function TAPIClient.parseClientAdd(js: TlkJSONObject): TClientAddResponse;
 var
   payload: TlkJsonObject;
-  points: TlkJsonObject;
-  historyObj: TlkJSONobject;
-  history: TlkJSONlist;
-  subscriptions: TlkJSONlist;
-  i: Integer;
 begin
   payload := MustField(js, 'payload') as TlkJSONobject;
 
@@ -447,8 +458,6 @@ var
   js: TlkJsonObject;
   headers: TStrings;
   params: TStrings;
-  paramsStr: string;
-  i: integer;
 begin
   headers := TStringList.Create;
   params := TStringList.Create;
@@ -485,8 +494,6 @@ var
   js: TlkJsonObject;
   headers: TStrings;
   params: TStrings;
-  paramsStr: string;
-  i: integer;
 begin
   headers := TStringList.Create;
   params := TStringList.Create;
@@ -526,7 +533,6 @@ var
   js: TlkJsonObject;
   headers: TStrings;
   params: TStrings;
-  i: integer;
 begin
   headers := TStringList.Create;
   params := TStringList.Create;
@@ -577,7 +583,6 @@ var
   js: TlkJsonObject;
   headers: TStrings;
   params: TStrings;
-  i: integer;
 begin
   headers := TStringList.Create;
   params := TStringList.Create;
@@ -605,7 +610,6 @@ var
   js: TlkJsonObject;
   headers: TStrings;
   params: TStrings;
-  i: integer;
   payload: TlkJSONobject;
 begin
   headers := TStringList.Create;
@@ -635,7 +639,6 @@ var
   js: TlkJsonObject;
   headers: TStrings;
   params: TStrings;
-  i: integer;
 begin
   headers := TStringList.Create;
   params := TStringList.Create;
@@ -655,6 +658,58 @@ begin
     js.Free;
   end;
 end;
+
+function TAPIClient.PurchaseEdit(
+  reqParams: IAPIRequiredParams): TPurchaseEditResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Post(URL + '/pl/purchases/edit', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Result := parsePurchaseEditResponse(js);
+  finally
+    js.Free;
+  end;
+end;
+
+function TAPIClient.parsePurchaseEditResponse(
+  js: TlkJSONobject): TPurchaseEditResponse;
+var
+  payload: TlkJSONobject;
+  user: TlkJSONobject;
+begin
+  payload:= MustField(js,'payload') as TlkJSONobject;
+  Result.ID := GetValueJSON(payload,'id',0);
+  Result.OrderNum := GetValueJSON(payload,'order_num','');
+
+  if not IsNullJSON(payload,'user') then
+  begin
+    user := MustField(payload,'user') as TlkJSONobject;
+  	Result.User.FullPhone:= GetValueJSON(user,'full_phone','');
+    Result.User.Phone:= GetValueJSON(user,'phone','');
+    Result.User.OriginUserID:= GetValueJSON(user,'origin_user_id','');
+    Result.User.LastName:= GetValueJSON(user,'last_name','');
+    Result.User.FirstName:= GetValueJSON(user,'first_name','');
+    Result.User.Points:= GetValueJSON(user,'points',0);
+    Result.User.ID:= GetValueJSON(user,'id',0);
+    Result.User.Email:= GetValueJSON(user,'id','');
+  end;
+end;
+
+
 
 end.
 

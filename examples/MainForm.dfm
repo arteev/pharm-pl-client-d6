@@ -1,8 +1,8 @@
 object Form1: TForm1
   Left = 226
-  Top = 367
-  Width = 994
-  Height = 513
+  Top = 377
+  Width = 1025
+  Height = 530
   Caption = 'Form1'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -104,8 +104,8 @@ object Form1: TForm1
     Top = 160
     Width = 569
     Height = 305
-    ActivePage = tsPurchases
-    TabIndex = 3
+    ActivePage = tsAuth
+    TabIndex = 0
     TabOrder = 1
     object tsAuth: TTabSheet
       Caption = 'Auth'
@@ -285,6 +285,13 @@ object Form1: TForm1
         Height = 13
         Caption = 'Order Num'
       end
+      object lbl3: TLabel
+        Left = 128
+        Top = 136
+        Width = 73
+        Height = 13
+        Caption = 'Move to Phone'
+      end
       object btnCalcCart: TButton
         Left = 16
         Top = 8
@@ -325,6 +332,7 @@ object Form1: TForm1
         Height = 25
         Caption = 'Purchase Edit'
         TabOrder = 4
+        OnClick = btnPurchaseEditClick
       end
       object btnPurchaseDelete: TButton
         Left = 16
@@ -352,6 +360,13 @@ object Form1: TForm1
         Caption = 'Purchase Confirm'
         TabOrder = 7
         OnClick = btnPurchaseConfirmClick
+      end
+      object edtToPhone: TEdit
+        Left = 208
+        Top = 136
+        Width = 121
+        Height = 21
+        TabOrder = 8
       end
     end
   end
@@ -411,14 +426,31 @@ object Form1: TForm1
       TabOrder = 0
     end
   end
+  object stat1: TStatusBar
+    Left = 0
+    Top = 484
+    Width = 1017
+    Height = 19
+    Panels = <>
+    SimplePanel = True
+  end
   object ApplicationEvents1: TApplicationEvents
     OnException = ApplicationEvents1Exception
     OnIdle = ApplicationEvents1Idle
     Left = 520
     Top = 48
   end
-  object NMURL1: TNMURL
-    Left = 312
-    Top = 128
+  object idhtp1: TIdHTTP
+    OnStatus = idhtp1Status
+    OnDisconnected = idhtp1Disconnected
+    OnConnected = idhtp1Connected
+    Request.Accept = 'text/html, */*'
+    Request.ContentLength = 0
+    Request.ContentRangeEnd = 0
+    Request.ContentRangeStart = 0
+    Request.ProxyPort = 0
+    Request.UserAgent = 'Mozilla/3.0 (compatible; Indy Library)'
+    Left = 520
+    Top = 96
   end
 end

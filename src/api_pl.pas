@@ -38,10 +38,9 @@ type
     FOnRefreshTokens: TRefreshTokensEvent;
     FOnSMS: TSMSEvent;
   protected
-    function CreateHTTPClient(IdHTTP:TIdHTTP=nil):IHTTPClient;
     procedure CheckAccessToken();
   public
-    constructor Create(params: PAPIParameters);
+    constructor Create(params: PAPIParameters;AHttpClient:IHTTPClient=nil);
     destructor Destroy();override;
 
     function GetAuth():IAuth;
@@ -62,6 +61,8 @@ type
     function PurchaseGet(RequestParameters: IAPIParams):TPurchaseResponse;
     function PurchaseDelete(RequestParameters: IAPIParams):TPurchaseDeleteResponse;
     function PurchaseConfirm(RequestParameters: IAPIParams):TPurchaseResponse;
+    function PurchaseEdit(RequestParameters: IAPIParams):TPurchaseEditResponse;
+
 
 
     property Auth:IAuth read GetAuth;
@@ -73,6 +74,8 @@ type
     	write FOnRefreshTokens;
     property OnSMS:TSMSEvent read FOnSMS write FOnSMS;
   end;
+
+  function CreateHTTPClient(IdHTTP:TIdHTTP=nil):IHTTPClient;
 
 implementation
 
@@ -108,7 +111,8 @@ begin
 end;
 
 
-constructor TAPIProgramLoyality.Create(params:PAPIParameters);
+constructor TAPIProgramLoyality.Create(params:PAPIParameters;
+	AHttpClient:IHTTPClient);
 begin
   if params<>nil then
   begin
@@ -118,7 +122,8 @@ begin
     FPassword := params.Password;
   end;
 
-  //TODO: hhtp client from params
+  FHttpClient:=AHttpClient;
+
   if FAuth = nil then
   begin
     if FHttpClient=nil then
@@ -129,19 +134,16 @@ begin
     FAuth := TAuthManager.Create(FHttpClient,FURL);
   end;
 
-  FAPIClient := TAPIClient.Create(FHttpClient,FURL);
+  if FAPIClient = nil then
+    FAPIClient := TAPIClient.Create(FHttpClient,FURL);
 end;
 
-function TAPIProgramLoyality.CreateHTTPClient(
-  IdHTTP: TIdHTTP): IHTTPClient;
-begin
-   Result:=HTTPClient.Create(IdHTTP);
-end;
+
 
 destructor TAPIProgramLoyality.Destroy;
 begin
-  if Assigned(FidClient) then
-    FidClient.Free;
+  //if Assigned(FidClient) then
+  //  FidClient.Free;
 
   FAuth := nil;
   FAPIClient := nil;
@@ -215,8 +217,6 @@ begin
 end;
 
 
-
-
 function TAPIProgramLoyality.PurchaseDelete(
   RequestParameters: IAPIParams): TPurchaseDeleteResponse;
 var
@@ -226,6 +226,18 @@ begin
   params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
 	  RequestParameters);
   Result:=FAPIClient.PurchaseDelete(params);
+end;
+
+
+function TAPIProgramLoyality.PurchaseEdit(
+  RequestParameters: IAPIParams): TPurchaseEditResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.PurchaseEdit(params);
 end;
 
 
@@ -257,6 +269,12 @@ begin
   FAuth.RefreshTokens(OnlyAccess,WithToken);
   if Assigned(FOnRefreshTokens) then
     FOnRefreshTokens(Self, OnlyAccess);
+end;
+
+
+function CreateHTTPClient(IdHTTP: TIdHTTP): IHTTPClient;
+begin
+   Result:=HTTPClient.Create(IdHTTP);
 end;
 
 end.
