@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls, NMURL, IdBaseComponent,
-  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, http;
+  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, http, IdException;
 
 type
   TForm1 = class(TForm)
@@ -65,6 +65,7 @@ type
     edtToPhone: TEdit;
     idhtp1: TIdHTTP;
     stat1: TStatusBar;
+    lblSessionInfo: TLabel;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -98,6 +99,8 @@ type
     procedure OnLoginAPI(api: TAPIProgramLoyality);
     procedure OnRefreshTokensEvent(api: TAPIProgramLoyality; const OnlyAccess: boolean);
     procedure OnSMS(api:TAPIProgramLoyality;const SMSCode:string);
+    procedure OnCallMethodStart (api:TAPIProgramLoyality; const method:string);
+    procedure OnCallMethodEnd(api:TAPIProgramLoyality; const method:string;Data:Pointer);
   public
     { Public declarations }
     procedure CreateAPI();
@@ -137,6 +140,8 @@ begin
   FAPI.OnLogin := Self.OnLoginAPI;
   FAPI.OnRefreshTokens := Self.OnRefreshTokensEvent;
   FAPI.OnSMS := Self.OnSMS;
+  FAPI.OnCallMethodStart := Self.OnCallMethodStart;
+  FAPI.OnCallMethodEnd := Self.OnCallMethodEnd;
 end;
 
 procedure TForm1.OnLoginAPI(api: TAPIProgramLoyality);
@@ -210,8 +215,25 @@ begin
 end;
 
 procedure TForm1.btnLoginClick(Sender: TObject);
+var Retry:Integer;
 begin
-  FAPI.Login();
+  //example: handle exception
+  Retry := 0;
+  while(Retry<2) do
+  try
+    Retry := Retry + 1;
+	FAPI.Login();
+    exit;
+  except
+	on E:EIdSocketError do
+  	if Retry=2 then
+    begin
+      // switch offline
+      raise;
+    end;
+    on E:Exception do
+    	ShowMessage(E.ClassName);
+  end;
 end;
 
 procedure TForm1.AddToLog(s: string);
@@ -269,6 +291,7 @@ begin
     exit;
   end;
   Application.ShowException(E);
+  
 end;
 
 procedure TForm1.btnSMSClick(Sender: TObject);
@@ -379,6 +402,25 @@ procedure TForm1.idhtp1Status(axSender: TObject; const axStatus: TIdStatus;
   const asStatusText: String);
 begin
  stat1.SimpleText := asStatusText;
+end;
+
+procedure TForm1.OnCallMethodEnd(api: TAPIProgramLoyality;
+  const method: string; Data: Pointer);
+var
+  pDataClient : ^TClientInfo;
+begin
+  AddToLog('End '+method);
+  if method = MethodClientInfo then
+  begin
+    pDataClient:=Data;
+    lblSessionInfo.Caption:='from event:'+ pDataClient.Phone;
+  end;
+end;
+
+procedure TForm1.OnCallMethodStart(api: TAPIProgramLoyality;
+  const method: string);
+begin
+  AddToLog('Start '+method);
 end;
 
 end.

@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 226
-  Top = 377
+  Left = 880
+  Top = 310
   Width = 1025
   Height = 530
   Caption = 'Form1'
@@ -104,8 +104,8 @@ object Form1: TForm1
     Top = 160
     Width = 569
     Height = 305
-    ActivePage = tsAuth
-    TabIndex = 0
+    ActivePage = tsClient
+    TabIndex = 2
     TabOrder = 1
     object tsAuth: TTabSheet
       Caption = 'Auth'
@@ -194,6 +194,13 @@ object Form1: TForm1
         Width = 68
         Height = 13
         Caption = '<SMS CODE>'
+      end
+      object lblSessionInfo: TLabel
+        Left = 360
+        Top = 24
+        Width = 62
+        Height = 13
+        Caption = '<from event>'
       end
       object btnClientInfo: TButton
         Left = 16
