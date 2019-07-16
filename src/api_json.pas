@@ -45,12 +45,12 @@ function GetValueJSON(js:TlkJSONbase;const name:string; default:Variant):Variant
 function MustField(js:TlkJSONobject;const name:string):TlkJSONbase;
 function IsNullJSON(js:TlkJSONobject;const name:string):Boolean;
 
+//function
+
 function JsStrToDateTime(const s:string): TDateTime;
 function JsStrToDate(const s:string): TDateTime;
 
 function JsStrToDateTimeDef(const s:string;const def:TDateTime): TDateTime;
-
-
 function JsStrToFloatDef(const S: string; const Default: Extended): Extended;
 
 implementation

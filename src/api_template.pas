@@ -8,7 +8,8 @@ uses
 type
   IAPIParams = interface
     procedure ApplyHeaders(strings: TStrings);
-    procedure ApplyParams(strings: TStrings);
+    procedure ApplyParams(strings: TStrings);overload;
+    procedure ApplyParams(stream:TStream);overload;
   end;
 
   IAPIRequiredParams = interface(IAPIParams)
@@ -24,7 +25,8 @@ type
     constructor Create(const AProvider, AToken: string; Extra: IAPIParams = nil);
     destructor Destroy; override;
     procedure ApplyHeaders(strings: TStrings);
-    procedure ApplyParams(strings: TStrings);
+    procedure ApplyParams(strings: TStrings); overload;
+    procedure ApplyParams(stream:TStream);overload;
     function GetExtra(): IAPIParams;
   end;
 
@@ -66,6 +68,11 @@ end;
 procedure TAPIRequiredParams.ApplyParams(strings: TStrings);
 begin
   //nothing
+end;
+
+procedure TAPIRequiredParams.ApplyParams(stream: TStream);
+begin
+//
 end;
 
 constructor TAPIRequiredParams.Create(const AProvider, AToken: string; Extra: IAPIParams);

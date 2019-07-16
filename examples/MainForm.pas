@@ -135,7 +135,7 @@ begin
     if FHttpClient=nil then
       FHttpClient := CreateHTTPClient(idhtp1);
 
-    FAPI := TAPIProgramLoyality.Create(params,FHttpClient);
+    FAPI := TAPIProgramLoyality.CreateWithParams(Self,params,FHttpClient);
   finally
     Dispose(params);
   end;
@@ -428,11 +428,20 @@ end;
 procedure TForm1.btnPurchaseToQueueClick(Sender: TObject);
 var
   params: IAPIParams;
-
+  cart:TArrayCartItems;
+const
+  userID = 1;
 begin
-  params := TAPIPurcaseNewParams.Create('',edtClientInfoPhone.Text,'',
+  SetLength(cart,1);
+  cart[0].Num := '0';
+  cart[0].SKU := 'test1';
+  cart[0].Price := 1000.10;
+  cart[0].Quantity := 2;
+  params := TAPIPurcaseNewQueueParams.Create('',edtClientInfoPhone.Text,'',
+     userID,
      edtOrderNum.Text,
-     StrToIntDef(edtPurchaseCartID.Text,0));
+     cart,
+     );
 
   FAPI.PurcaseAddToQueue(params);
   AddToLog(Format('Added purchase to queue: %s', [edtOrderNum.Text]));

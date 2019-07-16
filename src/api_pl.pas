@@ -62,7 +62,8 @@ type
     procedure StartMethod(const AMethod:string);
     procedure EndMethod(const AMethod:string;Data:Pointer);
   public
-    constructor Create(params: PAPIParameters;AHttpClient:IHTTPClient=nil);
+    constructor CreateWithParams(AOwner:TComponent;params: PAPIParameters;
+    	AHttpClient:IHTTPClient=nil);
     destructor Destroy();override;
 
     function GetAuth():IAuth;
@@ -110,9 +111,16 @@ implementation
 
 procedure TAPIProgramLoyality.PurcaseAddToQueue(
   RequestParameters: IAPIParams);
+var
+  stream : TMemoryStream;
 begin
- //TODO:
- raise Exception.Create('not emplemented');
+  //TODO: do it
+  StartMethod(MethodPurchaseToQueue);
+  stream := TMemoryStream.Create();
+  RequestParameters.ApplyParams(stream);
+  stream.Free;
+  EndMethod(MethodPurchaseToQueue,nil);
+  raise Exception.Create('not emplemented');
 end;
 
 procedure TAPIProgramLoyality.CheckAccessToken;
@@ -149,9 +157,10 @@ begin
 end;
 
 
-constructor TAPIProgramLoyality.Create(params:PAPIParameters;
+constructor TAPIProgramLoyality.CreateWithParams(AOwner:TComponent;params:PAPIParameters;
 	AHttpClient:IHTTPClient);
 begin
+  inherited Create(AOwner);
   if params<>nil then
   begin
     FURL := params.URL;

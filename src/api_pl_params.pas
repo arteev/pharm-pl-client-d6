@@ -11,7 +11,8 @@ type
     procedure AddValue(strings: TStrings; const name, value: string);
   public
     procedure ApplyHeaders(strings: TStrings); virtual;
-    procedure ApplyParams(strings: TStrings); virtual;
+    procedure ApplyParams(strings: TStrings); overload;virtual;
+    procedure ApplyParams(stream:TStream);overload;virtual;
   end;
 
   TAPIClientInfoParams = class(TAPIBaseParams)
@@ -160,6 +161,26 @@ type
     procedure ApplyParams(strings: TStrings); override;
   end;
 
+  TAPIPurcaseNewQueueParams = class(TAPIBaseParams)
+  private
+    FOriginID:string;
+    FPhone:string;
+    FEmail:string;
+    FUserID:Integer;
+    FOrderNum:string;
+    FCart:TArrayCartItems;
+    FPurchaseDepID:Integer;
+    FPurchaseDepOriginID:Integer;
+  public
+    constructor Create(const AOriginID, APhone, AEmail: string;
+      const AUserID:Integer;
+      const AOrderNum: string;
+      const ACart: TArrayCartItems;
+      const APurchaseDepID: Integer = 0;
+      const APurchaseDepOriginID: Integer = 0);
+    procedure ApplyParams(stream:TStream);override;
+  end;
+
 
 
 implementation
@@ -183,6 +204,11 @@ end;
 procedure TAPIBaseParams.ApplyParams(strings: TStrings);
 begin
 
+end;
+
+procedure TAPIBaseParams.ApplyParams(stream: TStream);
+begin
+//
 end;
 
 { TAPIClientInfoParams }
@@ -343,38 +369,44 @@ var
 	i:Integer;
     jsCart:TlkJSONobject;
     jsCartItem:TlkJSONobject;
+    OldDecimalSeparator:Char;
 begin
   inherited ApplyParams(strings);
+  OldDecimalSeparator:=DecimalSeparator;
+  DecimalSeparator := '.';
+  try
+    AddValue(strings, 'user_phone', FPhone);
+    AddValue(strings, 'origin_user_id', FOriginID);
+    AddValue(strings, 'email', FEmail);
+    AddValue(strings, 'order_num', FOrderNum);
+    if FCardID<>0 then
+      AddValue(strings, 'cart_id', IntToStr(FCardID));
+    if FPurchaseDepID<>0 then
+      AddValue(strings, 'purchase_dep_id', IntToStr(FPurchaseDepID));
+    if FPurchaseDepOriginID<>0 then
+      AddValue(strings, 'purchase_dep_origin_id', IntToStr(FPurchaseDepOriginID));
+    if FForceComplete then
+      AddValue(strings,'force_complete',BoolToStr[FForceComplete]);
 
-  AddValue(strings, 'user_phone', FPhone);
-  AddValue(strings, 'origin_user_id', FOriginID);
-  AddValue(strings, 'email', FEmail);
-  AddValue(strings, 'order_num', FOrderNum);
-  if FCardID<>0 then
-    AddValue(strings, 'cart_id', IntToStr(FCardID));
-  if FPurchaseDepID<>0 then
-    AddValue(strings, 'purchase_dep_id', IntToStr(FPurchaseDepID));
-  if FPurchaseDepOriginID<>0 then
-    AddValue(strings, 'purchase_dep_origin_id', IntToStr(FPurchaseDepOriginID));
-  if FForceComplete then
-  	AddValue(strings,'force_complete',BoolToStr[FForceComplete]);
-
-  if Length(FCart)>0 then
-  begin
-    jsCart := TlkJSONobject.Create();
-    try
-      for i:=0 to Length(FCart)-1 do
-      begin
-        jsCartItem := TlkJSONobject.Create();
-        jsCartItem.Add('sku', TlkJSONstring.Generate(FCart[i].SKU));
-        jsCartItem.Add('price', TlkJSONnumber.Generate(FCart[i].Price));
-        jsCartItem.Add('quantity', TlkJSONnumber.Generate(FCart[i].Quantity));
-        jsCart.Add(FCart[i].Num, jsCartItem);
+    if Length(FCart)>0 then
+    begin
+      jsCart := TlkJSONobject.Create();
+      try
+        for i:=0 to Length(FCart)-1 do
+        begin
+          jsCartItem := TlkJSONobject.Create();
+          jsCartItem.Add('sku', TlkJSONstring.Generate(FCart[i].SKU));
+          jsCartItem.Add('price', TlkJSONnumber.Generate(FCart[i].Price));
+          jsCartItem.Add('quantity', TlkJSONnumber.Generate(FCart[i].Quantity));
+          jsCart.Add(FCart[i].Num, jsCartItem);
+        end;
+        AddValue(strings,'cart',TlkJSON.GenerateText(jsCart));
+      finally
+        jsCart.Free;
       end;
-      AddValue(strings,'cart',TlkJSON.GenerateText(jsCart));
-    finally
-      jsCart.Free;
     end;
+  finally
+    DecimalSeparator:=OldDecimalSeparator;
   end;
 end;
 
@@ -469,6 +501,75 @@ begin
   FEmail := AEmail;
   FOriginUserID := AOriginUserID;
   FPurchaseID := APurchaseID;
+end;
+
+{ TAPIPurcaseNewQueueParams }
+
+procedure TAPIPurcaseNewQueueParams.ApplyParams(stream: TStream);
+var
+	i:Integer;
+    js: TlkJSONobject;
+    jsCart:TlkJSONobject;
+    jsCartItem:TlkJSONobject;
+    OldDecimalSeparator:Char;
+begin
+  OldDecimalSeparator:=DecimalSeparator;
+  DecimalSeparator := '.';
+  js := TlkJSONobject.Create();
+  try
+    if FPhone<>'' then
+    	js.Add('user_phone',TlkJSONstring.Generate(FPhone));
+    if FOriginID<>'' then
+    	js.Add('origin_user_id',TlkJSONstring.Generate(FOriginID));
+    if FEmail<>'' then
+    	js.Add('email',TlkJSONstring.Generate(FEmail));
+
+    js.Add('order_num',TlkJSONstring.Generate(FOrderNum));
+    js.Add('user_id',TlkJSONnumber.Generate(FUserID));
+
+    if FPurchaseDepID<>0 then
+        js.Add('purchase_dep_id',TlkJSONnumber.Generate(FPurchaseDepID));
+	if FPurchaseDepOriginID<>0 then
+    	js.Add('purchase_dep_origin_id',TlkJSONnumber.Generate(FPurchaseDepOriginID));
+
+
+    if Length(FCart)>0 then
+    begin
+      jsCart := TlkJSONobject.Create();
+      for i:=0 to Length(FCart)-1 do
+      begin
+        jsCartItem := TlkJSONobject.Create();
+        jsCartItem.Add('sku', TlkJSONstring.Generate(FCart[i].SKU));
+        jsCartItem.Add('price', TlkJSONnumber.Generate(FCart[i].Price));
+        jsCartItem.Add('quantity', TlkJSONnumber.Generate(FCart[i].Quantity));
+
+        jsCart.Add(FCart[i].Num, jsCartItem);
+      end;
+      js.Add('cart',jsCart);
+    end;
+
+    TlkJSONstreamed.SaveToStream(js,stream);
+
+  finally
+    DecimalSeparator:=OldDecimalSeparator;
+    js.Free;
+  end;
+end;
+
+constructor TAPIPurcaseNewQueueParams.Create(const AOriginID, APhone,
+  AEmail:string;
+  const AUserID:Integer;
+  const AOrderNum: string; const ACart: TArrayCartItems;
+  const APurchaseDepID, APurchaseDepOriginID: Integer);
+begin
+  FOriginID := AOriginID;
+  FPhone := APhone;
+  FEmail := AEmail;
+  FUserID := AUserID;
+  FOrderNum := AOrderNum;
+  FCart := ACart;
+  FPurchaseDepID:=APurchaseDepID;
+  FPurchaseDepOriginID := APurchaseDepOriginID;
 end;
 
 end.
