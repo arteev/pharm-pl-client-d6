@@ -121,6 +121,7 @@ begin
   stream.Free;
   EndMethod(MethodPurchaseToQueue,nil);
   raise Exception.Create('not emplemented');
+
 end;
 
 procedure TAPIProgramLoyality.CheckAccessToken;

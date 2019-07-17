@@ -70,6 +70,11 @@ type
   end;
 
 
+  TCartMarketingActions=record
+    Alias:string;
+    PriceDelta:double;
+    Name:string;
+  end;
   TCartPosition = record
   	Category: record
       SKU:string;
@@ -90,7 +95,7 @@ type
     DiscountPointsMax:integer;
     MinPrice:Double;
     DiscountPoints:Integer;
-    MarketingActions:array of string;
+    MarketingActions:array of TCartMarketingActions;
     ReversePointsRate:array of string;
   end;
 
@@ -247,7 +252,6 @@ begin
     for i := 0 to positions.Count - 1 do
     begin
       position := positions.Child[i] as TlkJSONobject;
-
       with Result.Positions[i] do
       begin
         Num := StrToIntDef(GetValueJSON(position, 'num', '0'), 0);
@@ -266,7 +270,15 @@ begin
         list := MustField(position, 'marketing_actions') as TlkJSONlist;
         SetLength(Result.Positions[i].MarketingActions, list.Count);
         for j := 0 to list.Count - 1 do
-          Result.Positions[i].MarketingActions[j] := list.getString(j);
+        begin
+          if list.Child[j].SelfType<>jsNull then
+          with Result.Positions[i].MarketingActions[j] do
+          begin
+            Alias:= GetValueJSON(list.Child[j], 'alias', '');
+            Name:=GetValueJSON(list.Child[j],'name','');
+            PriceDelta := JsStrToFloatDef(GetValueJSON(list.Child[j], 'points_delta', '0'), 0);
+          end;
+        end;
       end;
 
       if not IsNullJSON(position, 'reverse_points_rate') then
