@@ -2,143 +2,154 @@ unit http;
 
 interface
 
-uses ulkJSON, IdHTTP, Classes, SysUtils;
-
+uses
+  ulkJSON, IdHTTP, Classes, SysUtils, NMURL;
 
 type
-  TTypeRequest = (GET_REQUEST = $0, POST_REQUEST = $1);
-
-
-  Request=class;
-
   IHTTPClient = interface
-    function Get(req:Request):TlkJsonObject;
-    function Post(const url:string; params:TStream; Headers:TStrings):TlkJsonObject;
-  end;
-
-  Request=class
-  private
-    typ:TTypeRequest;
-    url:string;
-    FParams:TStream;
-  public
-    class function Get(const url:string):Request;
-    class function Post(const url:string; params:TStream):Request;
-    property Params:TStream read FParams;
+    function Get(const url: string; Params: TStrings; Headers: TStrings): TlkJsonObject;
+    function Post(const url: string; Params: TStream; Headers: TStrings): TlkJsonObject; overload;
+    function Post(const url: string; Params: TStrings; Headers: TStrings): TlkJsonObject; overload;
   end;
 
   HTTPClient = class(TInterfacedObject, IHTTPClient)
   private
     FidHTTPClient: TIdHTTP;
+    FURLEncoder: TNMURL;
   public
-    constructor Create(idHTTPClient:TIdHTTP);
-    function DoRequest(var req:Request):TlkJsonObject;
-    function Get(req:Request):TlkJsonObject;
-    function Post(const url:string; params:TStream; Headers:TStrings):TlkJsonObject;
+    constructor Create(idHTTPClient: TIdHTTP);
+    destructor Destroy; override;
+    function Get(const url: string; Params: TStrings; Headers: TStrings): TlkJsonObject;
+    function Post(const url: string; Params: TStream; Headers: TStrings): TlkJsonObject; overload;
+    function Post(const url: string; Params: TStrings; Headers: TStrings): TlkJsonObject; overload;
   end;
 
-
-function CreateDefaultClient(AOwner:TComponent):TIdHTTP;
+function CreateDefaultClient(AOwner: TComponent): TIdHTTP;
 
 implementation
 
-
-function CreateDefaultClient(AOwner:TComponent):TIdHTTP;
+function CreateDefaultClient(AOwner: TComponent): TIdHTTP;
 begin
   Result := TIdHTTP.Create(AOwner);
   Result.ProtocolVersion := pv1_1;
 end;
 
-constructor HTTPClient.Create(idHTTPClient:TIdHTTP);
+constructor HTTPClient.Create(idHTTPClient: TIdHTTP);
 begin
   Self.FidHTTPClient := idHTTPClient;
   Self.FidHTTPClient.Request.UserAgent := 'Mozilla/5.0 (Windows NT 6.1; rv:44.0) Gecko/20100101 Firefox/44.0';
+  FURLEncoder := TNMURL.Create(nil);
   inherited Create;
 end;
 
-function HTTPClient.Get(req:Request):TlkJsonObject;
+destructor HTTPClient.Destroy;
 begin
-  req.typ := GET_REQUEST;
-  Result := Self.DoRequest(req);
+  FURLEncoder.Free;
+  inherited;
 end;
 
-function HTTPClient.Post(const url:string; Params:TStream; Headers:TStrings):TlkJsonObject;
+function HTTPClient.Get(const url: string; Params: TStrings; Headers: TStrings): TlkJsonObject;
 var
-  Stream:TMemoryStream;
-  i:Integer;
+  Stream: TMemoryStream;
+  i: Integer;
+  tryURL: string;
 begin
-  Stream:=TMemoryStream.Create();
+
+  Stream := TMemoryStream.Create;
+  tryURL := url;
   try
     Self.FidHTTPClient.Request.ExtraHeaders.Clear;
-    Self.FidHTTPClient.Request.ExtraHeaders.Values['Content-Type']:= 'application/x-www-form-urlencoded';
-    if Headers<>nil then
+    if Headers <> nil then
     begin
-      for i:=0 to Headers.Count-1 do
+      for i := 0 to Headers.Count - 1 do
       begin
-        Self.FidHTTPClient.Request.ExtraHeaders.Values[Headers.Names[i]] :=
-          Headers.Values[Headers.Names[i]];
+        Self.FidHTTPClient.Request.ExtraHeaders.Values[Headers.Names[i]] := Headers.Values[Headers.Names[i]];
       end;
     end;
-    Self.FidHTTPClient.Post(url,Params,Stream);
-    Result := TlkJSONstreamed.ParseText(Pchar(Stream.Memory)) as TlkJSONobject;;
+    if Params <> Nil then
+    begin
+      tryURL := '';
+      for i := 0 to Params.Count - 1 do
+      begin
+        FURLEncoder.InputString := Params.Values[Params.Names[i]];
+        tryURL := tryURL + Params.Names[i] + '=' + FURLEncoder.Encode + '&';
+      end;
+      tryURL := url + '?' + tryURL;
+    end;
+    Self.FidHTTPClient.Get(tryURL, Stream);
+    Stream.Position := 0;
+    Result := TlkJSONstreamed.LoadFromStream(Stream) as TlkJSONobject;
+    Self.FidHTTPClient.Disconnect;
+  finally                         
+    Stream.Free;
+  end;
+end;
+
+function HTTPClient.Post(const url: string; Params: TStream; Headers: TStrings): TlkJsonObject;
+var
+  Stream: TMemoryStream;
+  i: Integer;
+begin
+  Stream := TMemoryStream.Create();
+  try
+    Self.FidHTTPClient.Request.ExtraHeaders.Clear;
+    Self.FidHTTPClient.Request.ExtraHeaders.Values['Content-Type'] := 'application/x-www-form-urlencoded';
+    if Headers <> nil then
+    begin
+      for i := 0 to Headers.Count - 1 do
+      begin
+        Self.FidHTTPClient.Request.ExtraHeaders.Values[Headers.Names[i]] := Headers.Values[Headers.Names[i]];
+      end;
+    end;
+    Self.FidHTTPClient.Post(url, Params, Stream);
+    Stream.Position := 0;
+    Result := TlkJSONstreamed.LoadFromStream(Stream) as TlkJSONobject;
+    Self.FidHTTPClient.Disconnect;
   finally
     Stream.Free;
   end;
 end;
 
-function HTTPClient.DoRequest(var req:Request):TlkJsonObject;
+function HTTPClient.Post(const url: string; Params, Headers: TStrings): TlkJsonObject;
 var
-
-  m:TIdHTTPMethod;
-  Stream:TMemoryStream;
-
-  s:TlkJSONobject;
-
+  Stream: TMemoryStream;
+  i: Integer;
+  ParamsEncode: TStringStream;
+  sParams: string;
 begin
-
-  case req.typ of
-
-  GET_REQUEST:
+  Stream := TMemoryStream.Create();
+  try
+    Self.FidHTTPClient.Request.ExtraHeaders.Clear;
+    Self.FidHTTPClient.Request.ExtraHeaders.Values['Content-Type'] := 'application/x-www-form-urlencoded';
+    if Headers <> nil then
     begin
-      m:=hmGet;
+      for i := 0 to Headers.Count - 1 do
+      begin
+        Self.FidHTTPClient.Request.ExtraHeaders.Values[Headers.Names[i]] := Headers.Values[Headers.Names[i]];
+      end;
     end;
-  POST_REQUEST:
+    if Params <> Nil then
     begin
-      m:=hmPost;
-    end;
 
+      for i := 0 to Params.Count - 1 do
+      begin
+        FURLEncoder.InputString := Params.Values[Params.Names[i]];
+        sParams := sParams + Params.Names[i] + '=' + FURLEncoder.Encode;
+        if i <> Params.Count - 1 then
+          sParams := sParams + '&';
+      end;
+      ParamsEncode := TStringStream.Create(sParams);
+    end;
+    Self.FidHTTPClient.Post(url, ParamsEncode, Stream);
+    Stream.Position := 0;
+    Result := TlkJSONstreamed.LoadFromStream(Stream) as TlkJSONobject;
+    Self.FidHTTPClient.Disconnect;
+  finally
+    if ParamsEncode <> nil then
+      ParamsEncode.Free;
+    Stream.Free;
   end;
-
-  Stream:=TMemoryStream.Create();
-  Self.FidHTTPClient.Connect;
-
-
-  Self.FidHTTPClient.DoRequest(m,req.url,req.Params, Stream);
-  
-  Self.FidHTTPClient.Disconnect;
-
-  s :=TlkJSONstreamed.ParseText(Pchar(Stream.Memory)) as TlkJSONobject;
-
-  Result := s;
-  Stream.Free;
 end;
-
-
-
-class function Request.Get(const  url:string):Request;
-begin
-  Result:=Request.Create;
-  Result.url := url;
-  Result.typ := GET_REQUEST;
-end;
-
-class function Request.Post(const url:string;params:TStream):Request;
-begin
-  Result:=Request.Create;
-  Result.url := url;
-  Result.typ := POST_REQUEST;
-  Result.FParams := params;
-end;
-
 
 end.
+

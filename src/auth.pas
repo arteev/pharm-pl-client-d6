@@ -7,6 +7,11 @@ type
   IAuth = interface(IInterface)
     procedure Login(UserName,Password: string);
     procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
+    function GetAccessToken:TToken;
+    function GetRefreshToken():TToken;
+
+    property AccessToken:TToken read GetAccessToken;
+    property RefreshToken:TToken read GetRefreshToken;
   end;
 
 
@@ -28,7 +33,10 @@ type
     destructor Destroy; override;
     procedure Login(UserName, Password: string);
     procedure RefreshTokens(const OnlyAccess:Boolean=False; const WithToken:string='');
-    property AccessToken:TToken read FAccessToken;
+    function GetAccessToken():TToken;
+    function GetRefreshToken():TToken;
+
+    property AccessToken:TToken read GetAccessToken;
     property RefreshToken:TToken read FRefreshToken;
   end;
 
@@ -38,7 +46,7 @@ implementation
 constructor TAuthManager.Create(client:IHTTPClient; URL:string);
 begin
   self.Client := client;
-  Self.URL := URL;
+  self.URL := URL;
 end;
 
 destructor TAuthManager.Destroy;
@@ -83,7 +91,10 @@ begin
 
   RefreshToken := WithToken;
   if (RefreshToken='') and not Self.ValidToken(Self.RefreshToken) then
-       raise InvalidToken.CreateWithToken(Self.RefreshToken.AsString);
+  begin
+	if Self.RefreshToken<>nil then RefreshToken := Self.RefreshToken.AsString;
+  	raise InvalidToken.CreateWithToken(RefreshToken);
+  end;
 
   if RefreshToken='' then
     RefreshToken := Self.RefreshToken.AsString;
@@ -133,7 +144,7 @@ end;
 
 function TAuthManager.ValidToken(Token:TToken):Boolean;
 begin
-  Result := Assigned(Token) and not Token.Expired()
+  Result := (Token<>nil) and Assigned(Token) and not Token.Expired()
 end;
 
 procedure TAuthManager.SetAccessToken(Token:TToken);
@@ -148,6 +159,16 @@ begin
   if Assigned(Self.FRefreshToken) then
     Self.FRefreshToken.Free;
   Self.FRefreshToken := Token;
+end;
+
+function TAuthManager.GetAccessToken: TToken;
+begin
+  Result := Self.FAccessToken;
+end;
+
+function TAuthManager.GetRefreshToken: TToken;
+begin
+  Result := Self.FRefreshToken;
 end;
 
 end.
