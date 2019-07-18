@@ -11,7 +11,7 @@ type
     S:Pointer;
     Size:GoInt;
   end;
-  GoUintptr = Cardinal;
+  GoUintptr = LongInt;
 
  //typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
   GoSlice = record
@@ -63,7 +63,34 @@ extern GoUint8 Publish(GoUintptr p0, GoString p1, GoString p2, GoUint8 p3, GoUin
 
 function StrToGoString(const S:string):GoString;
 
+procedure StrToGoString2(const S:string;var goS:GoString);
+procedure DisposeGoString(S:GoString);
+
 implementation
+
+procedure DisposeGoString(S:GoString);
+begin
+  if (S.S<>nil) and (S.Size<>0) then
+    FreeMem(S.S)
+end;
+
+procedure StrToGoString2(const S:string;var goS:GoString);
+var
+  utfs:UTF8String;
+  Temp : GoString;
+begin
+  if S='' then
+  begin
+    goS.S := nil;
+    goS.Size := 0;
+    exit;
+  end;
+  utfs:=AnsiToUtf8(S);
+  goS.S:=AllocMem(Length(utfs));
+  goS.Size := Length(utfs);
+  Move(utfs[1], goS.S^, Length(utfs));
+end;
+
 
 function StrToGoString(const S:string):GoString;
 var
