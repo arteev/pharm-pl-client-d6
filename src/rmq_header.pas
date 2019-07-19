@@ -6,6 +6,7 @@ uses Classes,SysUtils;
 type
   GoInt = Integer;
   GoUint8 = Byte;
+  
   PGoString = ^GoString;
   GoString = record
     S:Pointer;
@@ -13,7 +14,7 @@ type
   end;
   GoUintptr = Cardinal;
 
- //typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
+
   GoSlice = record
   	Data: Pointer;
     Len: GoInt;
@@ -21,38 +22,38 @@ type
   end;
 
 
-	function InitLog(AFileName:GoString):Byte;cdecl;external 'rmq.dll' name 'InitLog';
-    procedure PrintLog(S:GoString);cdecl;external 'rmq.dll' name 'PrintLog';
-    procedure CloseLog();cdecl;external 'rmq.dll' name 'CloseLog';
+  function InitLog(AFileName:GoString):Byte;cdecl;external 'rmq.dll' name 'InitLog';
+  procedure PrintLog(S:GoString);cdecl;external 'rmq.dll' name 'PrintLog';
+  procedure CloseLog();cdecl;external 'rmq.dll' name 'CloseLog';
 
 
-    function ConnectRMQ(URL: GoString;b:LongBool):GoUintptr;cdecl;external 'rmq.dll' name 'Connect';
-    procedure DisconnectRMQ(conn:GoUintptr);cdecl;external 'rmq.dll' name 'Disconnect';
-    function ConnectedRMQ(conn:GoUintptr):LongBool;cdecl;external 'rmq.dll' name 'Connected';
+  function ConnectRMQ(URL: GoString;TimeOut:GoInt):GoUintptr;cdecl;external 'rmq.dll' name 'Connect';
+  procedure DisconnectRMQ(conn:GoUintptr);cdecl;external 'rmq.dll' name 'Disconnect';
+  function ConnectedRMQ(conn:GoUintptr):LongBool;cdecl;external 'rmq.dll' name 'Connected';
 
-    function NewChannelRMQ(conn:GoUintptr):GoUintptr;cdecl;external 'rmq.dll' name 'NewChannel';
-    procedure CloseChannelRMQ(channel:GoUintptr);cdecl;external 'rmq.dll' name 'CloseChannel';
+  function NewChannelRMQ(conn:GoUintptr):GoUintptr;cdecl;external 'rmq.dll' name 'NewChannel';
+  procedure CloseChannelRMQ(channel:GoUintptr);cdecl;external 'rmq.dll' name 'CloseChannel';
 
-    function QueueDeclareRMQ(channel:GoUintptr;name:GoString;
-       durable,autoDelete,exclusive,noWait:GoUint8):GoUint8;cdecl;
-       external 'rmq.dll' name 'QueueDeclare';
+  function QueueDeclareRMQ(channel:GoUintptr;name:GoString;
+     durable,autoDelete,exclusive,noWait:GoUint8):GoUint8;cdecl;
+     external 'rmq.dll' name 'QueueDeclare';
 
-    function ExchangeDeclareRMQ(channel:GoUintptr;name,kind:GoString;
-    	durable, autoDelete, internal, noWait:GoUint8):GoUint8;cdecl;
-       external 'rmq.dll' name 'ExchangeDeclare';
+  function ExchangeDeclareRMQ(channel:GoUintptr;name,kind:GoString;
+      durable, autoDelete, internal, noWait:GoUint8):GoUint8;cdecl;
+     external 'rmq.dll' name 'ExchangeDeclare';
 
-    function QueueBindRMQ(channel:GoUintptr;name,key,exchange:GoString;
-        noWait:GoUint8):GoUint8;cdecl;
-       external 'rmq.dll' name 'QueueBind';
+  function QueueBindRMQ(channel:GoUintptr;name,key,exchange:GoString;
+      noWait:GoUint8):GoUint8;cdecl;
+     external 'rmq.dll' name 'QueueBind';
 
-    function PublishRMQ(channel:GoUintptr;exchange, key :GoString;
-       mandatory, immediate:GoUint8; data:GoSlice):GoUint8;cdecl;
-       external 'rmq.dll' name 'Publish';
+  function PublishRMQ(channel:GoUintptr;exchange, key :GoString;
+     mandatory, immediate:GoUint8; data:GoSlice):GoUint8;cdecl;
+     external 'rmq.dll' name 'Publish';
 
 
- 
-    procedure ReturnGCObjectRMQ(ptr:GoUintptr);cdecl;
-    	external 'rmq.dll' name 'FreeObject';
+
+  procedure ReturnGCObjectRMQ(ptr:GoUintptr);cdecl;
+      external 'rmq.dll' name 'FreeObject';
 
 
 

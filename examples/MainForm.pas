@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls, NMURL, IdBaseComponent,
-  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, http, IdException;
+  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, http, IdException,publisher;
 
 type
   TForm1 = class(TForm)
@@ -131,6 +131,12 @@ begin
     params.URL := edtURL.Text;
     params.User := edtUser.Text;
     params.Password := edtPassword.Text;
+
+    params.PubURL := 'amqp://guest:guest@localhost:5672/';
+    params.PubTimeout:=3;
+    params.PubExchange:='logs';
+    params.PubQueue := 'my';
+    params.PubKey := '';
 
     if FHttpClient=nil then
       FHttpClient := CreateHTTPClient(idhtp1);
@@ -443,8 +449,17 @@ begin
      cart,
      );
 
-  FAPI.PurcaseAddToQueue(params);
-  AddToLog(Format('Added purchase to queue: %s', [edtOrderNum.Text]));
+  Try
+  	FAPI.PurcaseAddToQueue(params);
+  	AddToLog(Format('Added purchase to queue: %s', [edtOrderNum.Text]));
+  except
+    on E:EPublisherConnFailed do
+    begin
+    	AddToLog(e.Message);
+        FAPI.Publisher.Reconnect();
+    end;
+  end;
+
 end;
 
 end.

@@ -44,6 +44,7 @@ type
     FURL:string;
     FConnection:GoUintptr;
     FChannels: TList;
+    FTimeOut:Integer;
     function GetConnected: Boolean;
     function GetChannelMQ(index: Integer): TChannelMQ;
     function GetCountChannels: Integer;
@@ -53,7 +54,7 @@ type
     property Handle:GoUintptr read FConnection;
 
   public
-    constructor Create(const AURL:string);
+    constructor Create(const AURL:string;const ATimeOut:Integer);
     destructor Destroy;override;
 
     procedure Connect();
@@ -91,16 +92,19 @@ begin
   if Connected then Exit;
   gURL:=StrToGoString(FURL);
   try
-  	FConnection:=ConnectRMQ(gURL,false);
+  	FConnection:=ConnectRMQ(gURL,FTimeOut);
+    if FConnection=0 then
+    	EConnectionRMQ.Create('not connected');
   finally
     DisposeGoString(gURL);
   end;
 end;
 
-constructor TRabbitMQ.Create(const AURL: string);
+constructor TRabbitMQ.Create(const AURL: string;const ATimeOut:Integer);
 begin
   Self.FURL:=AURL;
   FChannels:=TList.Create;
+  FTimeOut := ATimeOut;
 end;
 
 function TRabbitMQ.CreateChannel: TChannelMQ;

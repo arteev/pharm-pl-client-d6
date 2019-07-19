@@ -13,7 +13,11 @@ uses
   unix_utils in '..\src\unix_utils.pas',
   api_pl_client in '..\src\api_pl_client.pas',
   api_template in '..\src\api_template.pas',
-  api_pl_params in '..\src\api_pl_params.pas';
+  api_pl_params in '..\src\api_pl_params.pas',
+  rmq_header in '..\src\rmq_header.pas',
+  rmq_wrapper in '..\src\rmq_wrapper.pas',
+  publisher in '..\src\publisher.pas',
+  rmq_publisher in '..\src\rmq_publisher.pas';
 
 {$R *.res}
 

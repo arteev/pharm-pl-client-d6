@@ -2,7 +2,8 @@ unit api_pl;
 
 interface
 
-uses auth,http,token,IdHTTP, Classes, api_pl_client, api_template, SysUtils;
+uses auth,http,token,IdHTTP, Classes, api_pl_client, api_template, SysUtils,
+	publisher,rmq_publisher;
 
 const MethodLogin='login';
       MethodRefreshTokens = 'refresh_tokens';
@@ -27,6 +28,13 @@ type
     User:string;
     Password:string;
     AuthManager: IAuth;
+
+    Publisher: IPurchasePublisher;
+    PubURL: string;
+    PubTimeout: Integer;
+    PubExchange: string;
+    PubQueue: string;
+    PubKey: string;
   end;
 
   ExceptionEmptyToken=class(Exception);
@@ -51,12 +59,14 @@ type
     FAuth: IAuth;
     FAPIClient:IAPIClient;
     FHttpClient:IHTTPClient;
+    FPublisher:IPurchasePublisher;
     FidClient : TIdHTTP;
     FOnLogin: TLoginEvent;
     FOnRefreshTokens: TRefreshTokensEvent;
     FOnSMS: TSMSEvent;
     FOnCallMethodStart: TCallMethodStartEvent;
     FOnCallMethodEnd: TCallMethodEndEvent;
+    function GetPublisher: IPurchasePublisher;
   protected
     procedure CheckAccessToken();
     procedure StartMethod(const AMethod:string);
@@ -92,6 +102,7 @@ type
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
     property RefreshToken:TToken read GetRefreshToken;
+    property Publisher:IPurchasePublisher read GetPublisher;
 
     property OnLogin:TLoginEvent read FOnLogin write FOnLogin;
     property OnRefreshTokens:TRefreshTokensEvent  read FOnRefreshTokens
@@ -114,14 +125,9 @@ procedure TAPIProgramLoyality.PurcaseAddToQueue(
 var
   stream : TMemoryStream;
 begin
-  //TODO: do it
   StartMethod(MethodPurchaseToQueue);
-  stream := TMemoryStream.Create();
-  RequestParameters.ApplyParams(stream);
-  stream.Free;
+  FPublisher.Publish(RequestParameters);
   EndMethod(MethodPurchaseToQueue,nil);
-  raise Exception.Create('not emplemented');
-
 end;
 
 procedure TAPIProgramLoyality.CheckAccessToken;
@@ -168,9 +174,11 @@ begin
     FAuth := params.AuthManager;
     FUser := params.User;
     FPassword := params.Password;
+    FPublisher := params.Publisher;
   end;
 
   FHttpClient:=AHttpClient;
+
 
   if FAuth = nil then
   begin
@@ -184,6 +192,16 @@ begin
 
   if FAPIClient = nil then
     FAPIClient := TAPIClient.Create(FHttpClient,FURL);
+
+  if FPublisher = nil then
+  begin
+    if params<>nil then
+      FPublisher := TPublisherRMQ.Create(params.PubURL,params.PubExchange,
+      params.PubQueue,params.PubKey,params.PubTimeout)
+    else
+      FPublisher := TPublisherRMQ.Create();
+    Exit;
+  end;
 end;
 
 
@@ -356,6 +374,11 @@ procedure TAPIProgramLoyality.StartMethod(const AMethod: string);
 begin
   if Assigned(FOnCallMethodStart) then
     FOnCallMethodStart(self,AMethod);
+end;
+
+function TAPIProgramLoyality.GetPublisher: IPurchasePublisher;
+begin
+  Result := Self.FPublisher;
 end;
 
 end.

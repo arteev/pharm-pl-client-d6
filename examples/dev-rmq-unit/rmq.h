@@ -69,7 +69,7 @@ extern "C" {
 #endif
 
 
-extern GoUintptr Connect(GoString p0, GoUint8 p1);
+extern GoUintptr Connect(GoString p0, GoInt p1);
 
 extern GoUint8 Connected(GoUintptr p0);
 
