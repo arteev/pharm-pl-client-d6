@@ -29,12 +29,13 @@ type
 
 
     procedure QueueDeclare(const AName:string;
-      const durable,autoDelete,exclusive,noWait:boolean);
+      const durable,autoDelete,exclusive,noWait:boolean;Args:TStrings=nil);
     procedure ExchangeDeclare(const AName,AKind:string;
-      const durable, autoDelete, internal, noWait:Boolean);
-    procedure QueueBind(const AName,AKey,AExchange:string;const noWait:Boolean);
+      const durable, autoDelete, internal, noWait:Boolean;Args:TStrings=nil);
+    procedure QueueBind(const AName,AKey,AExchange:string;const noWait:Boolean;
+       Args:TStrings=nil);
     procedure Publish(const AExchange,Akey:string;
-      const mandatory,immediate:Boolean;
+      const mandatory,immediate:Boolean; const AMessageID:string;
       const AStream:TStream);
     property Connected:Boolean read FConnected;
   end;
@@ -70,6 +71,8 @@ type
   end;
 
 implementation
+
+function CreateMapFromArgs(Args:TStrings):GoUintptr;forward;
 
 { TRabbitMQ }
 
@@ -195,33 +198,41 @@ begin
 end;
 
 procedure TChannelMQ.ExchangeDeclare(const AName, AKind: string;
-  const durable, autoDelete, internal, noWait: Boolean);
+  const durable, autoDelete, internal, noWait: Boolean;Args:TStrings=nil);
 var
   gName,gKind:GoString;
+  gArgs:GoUintptr;
 begin
   gName := StrToGoString(AName);
   gKind := StrToGoString(AKind);
+  if Args<>nil then
+    gArgs:=CreateMapFromArgs(Args);
   try
     if ExchangeDeclareRMQ(FChannel,gName,gKind,
         BoolToGoBool[durable],
         BoolToGoBool[autoDelete],
         BoolToGoBool[internal],
-        BoolToGoBool[noWait]) = 0 then
+        BoolToGoBool[noWait],
+        gArgs) = 0 then
         raise EChannelDecrare.CreateFmt('could not ExchangeDeclare: %s',[AName]);
   finally
+    if gArgs>0 then
+      ReturnGCObjectRMQ(gArgs);
     DisposeGoString(gName);
     DisposeGoString(gKind);
   end;
 end;
 
-procedure TChannelMQ.Publish(const AExchange, Akey: string;
-  const mandatory, immediate: Boolean; const AStream: TStream);
+procedure TChannelMQ.Publish(const AExchange,Akey:string;
+      const mandatory,immediate:Boolean; const AMessageID:string;
+      const AStream:TStream);
 var
-  gKey,gExchange:GoString;
+  gKey,gExchange,gMessageID:GoString;
   data:GoSlice;
 begin
   gKey := StrToGoString(AKey);
   gExchange :=StrToGoString(AExchange);
+  gMessageID := StrToGoString(AMessageID);
   try
   	data.Len := AStream.Size;
     data.Cap := data.Len;
@@ -231,6 +242,7 @@ begin
     if PublishRMQ(FChannel,gExchange,gKey,
       BoolToGoBool[mandatory],
       BoolToGoBool[immediate],
+      gMessageID,
       data) = 0 then
       raise EChannelDecrare.CreateFmt('could not Publish: %s (%s)',[AExchange,AKey]);
   finally
@@ -238,43 +250,82 @@ begin
       FreeMem(data.Data);
     DisposeGoString(gKey);
     DisposeGoString(gExchange);
+    DisposeGoString(gMessageID);
   end;
 
 end;
 
 procedure TChannelMQ.QueueBind(const AName, AKey, AExchange: string;
-  const noWait: Boolean);
+  const noWait: Boolean;Args:TStrings=nil);
 var
   gName,gKey,gExchange:GoString;
+  gArgs:GoUintptr;
 begin
   gName := StrToGoString(AName);
   gKey := StrToGoString(AKey);
   gExchange :=StrToGoString(AExchange);
+  if Args<>nil then
+    gArgs:=CreateMapFromArgs(Args);
   try
-    if QueueBindRMQ(FChannel,gName,gKey,gExchange,BoolToGoBool[noWait]) = 0 then
+    if QueueBindRMQ(FChannel,gName,gKey,gExchange,BoolToGoBool[noWait],
+    	gArgs) = 0 then
       raise EChannelDecrare.CreateFmt('could not ExchangeDeclare: %s',[AName]);
   finally
     DisposeGoString(gName);
     DisposeGoString(gKey);
     DisposeGoString(gExchange);
+    if gArgs>0 then
+      ReturnGCObjectRMQ(gArgs);
   end;
 end;
 
 procedure TChannelMQ.QueueDeclare(const AName: string; const durable,
-  autoDelete, exclusive, noWait: boolean);
+  autoDelete, exclusive, noWait: boolean; Args:TStrings);
 var
   gName,gKind:GoString;
+  gArgs:GoUintptr;
 begin
   gName := StrToGoString(AName);
+  if Args<>nil then
+    gArgs:=CreateMapFromArgs(Args);
   try
     if QueueDeclareRMQ(FChannel,gName,
         BoolToGoBool[durable],
         BoolToGoBool[autoDelete],
         BoolToGoBool[exclusive],
-        BoolToGoBool[noWait]) = 0 then
+        BoolToGoBool[noWait],
+        gArgs) = 0 then
         raise EChannelDecrare.CreateFmt('could not QueueDeclare: %s',[AName]);
   finally
     DisposeGoString(gName);
+    if gArgs>0 then
+      ReturnGCObjectRMQ(gArgs);
+  end;
+end;
+
+function CreateMapFromArgs(Args:TStrings):GoUintptr;
+var i:Integer;
+	key,value:GoString;
+    sKey : string;
+begin
+  Result :=MapArgs();
+  try
+    for i:=0 to Args.Count-1 do
+    begin
+        sKey := Args.Names[i];
+	    key:=StrToGoString(sKey);
+        value := StrToGoString(Args.Values[sKey]);
+    	try
+          MapArgsAdd(Result,key,value);
+        finally
+          DisposeGoString(key);
+          DisposeGoString(value);
+        end;
+    end;
+  except
+    ReturnGCObjectRMQ(Result);
+    Result:=0;
+    raise;
   end;
 end;
 

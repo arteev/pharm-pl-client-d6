@@ -35,25 +35,29 @@ type
   procedure CloseChannelRMQ(channel:GoUintptr);cdecl;external 'rmq.dll' name 'CloseChannel';
 
   function QueueDeclareRMQ(channel:GoUintptr;name:GoString;
-     durable,autoDelete,exclusive,noWait:GoUint8):GoUint8;cdecl;
+     durable,autoDelete,exclusive,noWait:GoUint8;Args:GoUintptr):GoUint8;cdecl;
      external 'rmq.dll' name 'QueueDeclare';
 
   function ExchangeDeclareRMQ(channel:GoUintptr;name,kind:GoString;
-      durable, autoDelete, internal, noWait:GoUint8):GoUint8;cdecl;
+      durable, autoDelete, internal, noWait:GoUint8;Args:GoUintptr):GoUint8;cdecl;
      external 'rmq.dll' name 'ExchangeDeclare';
 
   function QueueBindRMQ(channel:GoUintptr;name,key,exchange:GoString;
-      noWait:GoUint8):GoUint8;cdecl;
+      noWait:GoUint8;Args:GoUintptr):GoUint8;cdecl;
      external 'rmq.dll' name 'QueueBind';
 
   function PublishRMQ(channel:GoUintptr;exchange, key :GoString;
-     mandatory, immediate:GoUint8; data:GoSlice):GoUint8;cdecl;
+     mandatory, immediate:GoUint8;MessageID:GoString;data:GoSlice):GoUint8;cdecl;
      external 'rmq.dll' name 'Publish';
 
 
 
   procedure ReturnGCObjectRMQ(ptr:GoUintptr);cdecl;
       external 'rmq.dll' name 'FreeObject';
+
+  function MapArgs():GoUintptr;cdecl;external 'rmq.dll' name 'MapArgs';
+  procedure MapArgsAdd(Map:GoUintptr;key,value:GoString);cdecl;
+  	external 'rmq.dll' name 'MapArgsAdd';
 
 
 

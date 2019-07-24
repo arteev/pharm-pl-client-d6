@@ -5,7 +5,8 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, api_pl, AppEvnts, ComCtrls, NMURL, IdBaseComponent,
-  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, http, IdException,publisher;
+  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, http, IdException,publisher,
+  rmq_header;
 
 type
   TForm1 = class(TForm)
@@ -89,6 +90,7 @@ type
     procedure idhtp1Status(axSender: TObject; const axStatus: TIdStatus;
       const asStatusText: String);
     procedure btnPurchaseToQueueClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -135,14 +137,20 @@ begin
     params.PubURL := 'amqp://guest:guest@localhost:5672/';
     params.PubTimeout:=3;
     params.PubExchange:='logs';
-    params.PubQueue := 'my';
+    params.PubQueue := 'my.pl';
     params.PubKey := '';
+    params.PubArgsQueue := TStringList.Create;
+    params.PubArgsExchange := nil;
+    params.PubArgsBind := nil;
+
+    params.PubArgsQueue.Values['x-dead-letter-exchange']:='my.dead.topic';
 
     if FHttpClient=nil then
       FHttpClient := CreateHTTPClient(idhtp1);
 
     FAPI := TAPIProgramLoyality.CreateWithParams(Self,params,FHttpClient);
   finally
+    params.PubArgsQueue.Free;
     Dispose(params);
   end;
   FAPI.OnLogin := Self.OnLoginAPI;
@@ -435,22 +443,27 @@ procedure TForm1.btnPurchaseToQueueClick(Sender: TObject);
 var
   params: IAPIParams;
   cart:TArrayCartItems;
+  g:TGUID;
 const
   userID = 1;
 begin
   SetLength(cart,1);
-  cart[0].Num := '0';
+  cart[0].Num := '1';
   cart[0].SKU := 'test1';
   cart[0].Price := 1000.10;
   cart[0].Quantity := 2;
   params := TAPIPurcaseNewQueueParams.Create('',edtClientInfoPhone.Text,'',
+     ProviderSailPlay,
      userID,
      edtOrderNum.Text,
      cart,
      );
 
   Try
-  	FAPI.PurcaseAddToQueue(params);
+
+
+    CreateGUID(g);
+  	FAPI.PurcaseAddToQueue(params,GUIDToString(g));
   	AddToLog(Format('Added purchase to queue: %s', [edtOrderNum.Text]));
   except
     on E:EPublisherConnFailed do
@@ -460,6 +473,18 @@ begin
     end;
   end;
 
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+var
+  name:GoString;
+begin
+  name := StrToGoString('c:\log1.txt');
+  try
+    InitLog(name);
+  finally
+    DisposeGoString(name);
+  end;
 end;
 
 end.

@@ -35,6 +35,9 @@ type
     PubExchange: string;
     PubQueue: string;
     PubKey: string;
+    PubArgsQueue:TStrings;
+    PubArgsExchange:TStrings;
+    PubArgsBind:TStrings;
   end;
 
   ExceptionEmptyToken=class(Exception);
@@ -97,7 +100,8 @@ type
 
 
     { API Queue }
-    procedure PurcaseAddToQueue(RequestParameters: IAPIParams);
+    procedure PurcaseAddToQueue(RequestParameters: IAPIParams;
+    	const AMessageID:string);
 
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
@@ -121,12 +125,12 @@ implementation
 { TAPIProgramLoyality }
 
 procedure TAPIProgramLoyality.PurcaseAddToQueue(
-  RequestParameters: IAPIParams);
+  RequestParameters: IAPIParams;const AMessageID:string);
 var
   stream : TMemoryStream;
 begin
   StartMethod(MethodPurchaseToQueue);
-  FPublisher.Publish(RequestParameters);
+  FPublisher.Publish(RequestParameters,AMessageID);
   EndMethod(MethodPurchaseToQueue,nil);
 end;
 
@@ -195,9 +199,12 @@ begin
 
   if FPublisher = nil then
   begin
+
     if params<>nil then
-      FPublisher := TPublisherRMQ.Create(params.PubURL,params.PubExchange,
-      params.PubQueue,params.PubKey,params.PubTimeout)
+      FPublisher := TPublisherRMQ.Create(params.PubURL, params.PubExchange,
+      params.PubQueue, params.PubKey,
+      params.PubArgsExchange, params.PubArgsQueue, params.PubArgsBind,
+      params.PubTimeout)
     else
       FPublisher := TPublisherRMQ.Create();
     Exit;

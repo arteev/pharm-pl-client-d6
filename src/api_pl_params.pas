@@ -166,6 +166,7 @@ type
     FOriginID:string;
     FPhone:string;
     FEmail:string;
+    FProviderName:string;
     FUserID:Integer;
     FOrderNum:string;
     FCart:TArrayCartItems;
@@ -173,6 +174,7 @@ type
     FPurchaseDepOriginID:Integer;
   public
     constructor Create(const AOriginID, APhone, AEmail: string;
+      const AProviderName:string;
       const AUserID:Integer;
       const AOrderNum: string;
       const ACart: TArrayCartItems;
@@ -524,6 +526,7 @@ begin
     if FEmail<>'' then
     	js.Add('email',TlkJSONstring.Generate(FEmail));
 
+    js.Add('provider',TlkJSONstring.Generate(FProviderName));
     js.Add('order_num',TlkJSONstring.Generate(FOrderNum));
     js.Add('user_id',TlkJSONnumber.Generate(FUserID));
 
@@ -557,7 +560,7 @@ begin
 end;
 
 constructor TAPIPurcaseNewQueueParams.Create(const AOriginID, APhone,
-  AEmail:string;
+  AEmail,AProviderName:string;
   const AUserID:Integer;
   const AOrderNum: string; const ACart: TArrayCartItems;
   const APurchaseDepID, APurchaseDepOriginID: Integer);
@@ -565,6 +568,7 @@ begin
   FOriginID := AOriginID;
   FPhone := APhone;
   FEmail := AEmail;
+  FProviderName:=AProviderName;
   FUserID := AUserID;
   FOrderNum := AOrderNum;
   FCart := ACart;
