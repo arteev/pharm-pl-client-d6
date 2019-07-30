@@ -143,7 +143,7 @@ begin
     params.PubArgsExchange := nil;
     params.PubArgsBind := nil;
 
-    params.PubArgsQueue.Values['x-dead-letter-exchange']:='my.dead.topic';
+    //params.PubArgsQueue.Values['x-dead-letter-exchange']:='my.dead.topic';
 
     if FHttpClient=nil then
       FHttpClient := CreateHTTPClient(idhtp1);
