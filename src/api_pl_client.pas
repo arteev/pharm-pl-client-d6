@@ -155,6 +155,17 @@ type
     end;
   end;
 
+  TPurchaseReturnCart = record
+  	ID:Integer;
+  end;
+  TPurchaseReturnsResponse = record
+    Purchase:TPurchase;
+    PossibleActions:TMarketingActions;
+    MarketingActionsApplied:TMarketingActions;
+    Cart:TCart;
+    ReturnCart:TPurchaseReturnCart;
+  end;
+
   IAPIClient = interface
 	  // Sessions
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
@@ -170,6 +181,7 @@ type
     function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
     function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseEdit(reqParams: IAPIRequiredParams):TPurchaseEditResponse;
+    function PurchaseReturns(reqParams: IAPIRequiredParams):TPurchaseReturnsResponse;
   end;
 
   TAPIClient = class(TAPITemplate, IAPIClient)
@@ -180,9 +192,8 @@ type
     function parseMarketingCalcCart(js:TlkJSONobject):TMarketingCalcCartResponse;
     function parsePurchaseResponse(js:TlkJSONobject):TPurchaseResponse;
     function parsePurchaseEditResponse(js:TlkJSONobject):TPurchaseEditResponse;
-
+    function parsePurchaseReturnsResponse(js:TlkJSONobject):TPurchaseReturnsResponse;
   public
-
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
     function GetClientInfo(reqParams: IAPIRequiredParams): TClientInfo;
     function ClientAdd(reqParams: IAPIRequiredParams):TClientAddResponse;
@@ -195,9 +206,15 @@ type
     function PurchaseDelete(reqParams: IAPIRequiredParams):TPurchaseDeleteResponse;
     function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseEdit(reqParams: IAPIRequiredParams):TPurchaseEditResponse;
+    function PurchaseReturns(reqParams: IAPIRequiredParams):TPurchaseReturnsResponse;
   end;
 
 implementation
+
+function parseReturnCart(js: TlkJSONobject): TPurchaseReturnCart;
+begin
+  Result.ID := StrToInt(GetValueJSON(js, 'id', 0));
+end;
 
 function parsePurchase(js: TlkJSONobject): TPurchase;
 begin
@@ -586,7 +603,6 @@ begin
 
 	if not IsNullJSON(cart,'cart') then
     	Result.Cart := parseCart(MustField(cart,'cart') as TlkJSONobject);
-
 end;
 
 function TAPIClient.PurchaseGet(
@@ -722,6 +738,57 @@ begin
 end;
 
 
+
+function TAPIClient.PurchaseReturns(
+  reqParams: IAPIRequiredParams): TPurchaseReturnsResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Post(URL + '/pl/purchases/returns/create', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+    Result := parsePurchaseReturnsResponse(js);
+  finally
+    js.Free;
+  end;
+end;
+
+function TAPIClient.parsePurchaseReturnsResponse(
+  js: TlkJSONobject): TPurchaseReturnsResponse;
+var
+  payload: TlkJSONobject;
+  cart: TlkJSONobject;
+begin
+  payload:= MustField(js,'payload') as TlkJSONobject;
+  Result.Purchase := parsePurchase(MustField(payload,'purchase') as TlkJSONobject);
+
+  cart:= MustField(payload,'cart') as TlkJSONobject;
+
+    if not IsNullJSON(cart,'possible_marketing_actions') then
+      Result.PossibleActions := parseMarketingActions(
+        MustField(cart,'possible_marketing_actions') as TlkJSONlist);
+
+    if not IsNullJSON(cart,'marketing_actions_applied') then
+      Result.MarketingActionsApplied := parseMarketingActions(
+        MustField(cart,'marketing_actions_applied') as TlkJSONlist);
+
+	if not IsNullJSON(cart,'cart') then
+    	Result.Cart := parseCart(MustField(cart,'cart') as TlkJSONobject);
+    if not IsNullJSON(payload,'cart_return') then
+    	Result.ReturnCart := parseReturnCart(MustField(payload,'cart_return') as TlkJSONobject)
+end;
 
 end.
 

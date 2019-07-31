@@ -79,6 +79,7 @@ type
     MinPrice:Double;
   end;
   TArrayCartItems = array of TCartItem;
+
   TAPIMarketingCartCalcParams = class(TAPIBaseParams)
   private
     FPromocodes:TArrayStrings;
@@ -181,6 +182,22 @@ type
       const APurchaseDepID: Integer = 0;
       const APurchaseDepOriginID: Integer = 0);
     procedure ApplyParams(stream:TStream);override;
+  end;
+
+  TCartReturnsItem = record
+    Num:string;
+    Quantity: Integer;
+    Reason: string;
+  end;
+  TArrayCartReturnsItems = array of TCartReturnsItem;
+  TAPIPurchaseReturnsParams = class (TAPIBaseParams)
+  private
+    ForderNum:string;
+    FCart:TArrayCartReturnsItems;
+  public
+    constructor Create(const AOrderNum:string;
+    	ACart:TArrayCartReturnsItems);
+    procedure ApplyParams(strings: TStrings); override;
   end;
 
 
@@ -574,6 +591,51 @@ begin
   FCart := ACart;
   FPurchaseDepID:=APurchaseDepID;
   FPurchaseDepOriginID := APurchaseDepOriginID;
+end;
+
+
+
+
+{ TAPIPurchaseReturnsParams }
+
+procedure TAPIPurchaseReturnsParams.ApplyParams(strings: TStrings);
+var
+  i: Integer;
+  jsCart: TlkJSONobject;
+  jsCartItem: TlkJSONobject;
+  OldDecimalSeparator: Char;
+begin
+  inherited ApplyParams(strings);
+  OldDecimalSeparator := DecimalSeparator;
+  DecimalSeparator := '.';
+  try
+    AddValue(strings, 'order_num', ForderNum);
+    if Length(FCart) > 0 then
+    begin
+      jsCart := TlkJSONobject.Create();
+      try
+        for i := 0 to Length(FCart) - 1 do
+        begin
+          jsCartItem := TlkJSONobject.Create();
+          jsCartItem.Add('quantity', TlkJSONnumber.Generate(FCart[i].Quantity));
+          jsCartItem.Add('reason', TlkJSONstring.Generate(FCart[i].Reason));
+          jsCart.Add(FCart[i].Num, jsCartItem);
+        end;
+        AddValue(strings, 'return_cart', TlkJSON.GenerateText(jsCart));
+      finally
+        jsCart.Free;
+      end;
+    end;
+  finally
+    DecimalSeparator := OldDecimalSeparator;
+  end;
+end;
+
+constructor TAPIPurchaseReturnsParams.Create(const AOrderNum: string;
+  ACart: TArrayCartReturnsItems);
+begin
+  Self.ForderNum := AOrderNum;
+  Self.FCart := ACart;
 end;
 
 end.

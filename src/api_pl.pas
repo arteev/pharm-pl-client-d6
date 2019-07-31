@@ -17,6 +17,7 @@ const MethodLogin='login';
       MethodPurchaseDelete = 'purchase_delete';
       MethodPurchaseConfirm = 'purchase_confirm';
       MethodPurchaseEdit = 'purchase_edit';
+      MethodPurchaseReturns = 'purchase_returns';
 
       MethodPurchaseToQueue = 'purchase_to_queue';
 
@@ -97,6 +98,7 @@ type
     function PurchaseDelete(RequestParameters: IAPIParams):TPurchaseDeleteResponse;
     function PurchaseConfirm(RequestParameters: IAPIParams):TPurchaseResponse;
     function PurchaseEdit(RequestParameters: IAPIParams):TPurchaseEditResponse;
+    function PurchaseReturns(RequestParameters: IAPIParams):TPurchaseReturnsResponse;
 
 
     { API Queue }
@@ -386,6 +388,20 @@ end;
 function TAPIProgramLoyality.GetPublisher: IPurchasePublisher;
 begin
   Result := Self.FPublisher;
+end;
+
+function TAPIProgramLoyality.PurchaseReturns(
+  RequestParameters: IAPIParams): TPurchaseReturnsResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  CheckAccessToken();
+  StartMethod(MethodPurchaseReturns);
+  params := TAPIRequiredParams.Create(ProviderSailPlay,AccessToken.AsString,
+	  RequestParameters);
+  Result:=FAPIClient.PurchaseReturns(params);
+  EndMethod(MethodPurchaseReturns,@Result);
+
 end;
 
 end.

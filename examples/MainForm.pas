@@ -68,6 +68,7 @@ type
     stat1: TStatusBar;
     lblSessionInfo: TLabel;
     btnPurchaseToQueue: TButton;
+    btnPurchaseReturn: TButton;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -91,6 +92,7 @@ type
       const asStatusText: String);
     procedure btnPurchaseToQueueClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure btnPurchaseReturnClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -134,7 +136,7 @@ begin
     params.User := edtUser.Text;
     params.Password := edtPassword.Text;
 
-    params.PubURL := 'amqp://guest:guest@localhost:5672/';
+    params.PubURL := 'amqp://guest:guest@localhost:5772/';
     params.PubTimeout:=3;
     params.PubExchange:='logs';
     params.PubQueue := 'my.pl';
@@ -143,7 +145,7 @@ begin
     params.PubArgsExchange := nil;
     params.PubArgsBind := nil;
 
-    params.PubArgsQueue.Values['x-dead-letter-exchange']:='my.dead.topic';
+    //params.PubArgsQueue.Values['x-dead-letter-exchange']:='my.dead.topic';
 
     if FHttpClient=nil then
       FHttpClient := CreateHTTPClient(idhtp1);
@@ -336,15 +338,24 @@ var
 begin
   SetLength(promocodes,1);
   SetLength(cardNumbers,1);
-  SetLength(Cart,1);
+  SetLength(Cart,2);
   promocodes[0] := '123123';
   cardNumbers[0] := '111222';
-  cart[0].Num := '0';
+  cart[0].Num := '1';
   cart[0].SKU := 'item1';
   cart[0].Price := 1000;
   cart[0].Quantity := 1;
   cart[0].DiscountPoints := 0;
   cart[0].MinPrice := 250;
+
+  cart[1].Num := '2';
+  cart[1].SKU := 'item1';
+  cart[1].Price := 1500;
+  cart[1].Quantity := 2;
+  cart[1].DiscountPoints := 0;
+  cart[1].MinPrice := 300;
+
+
   params := TAPIMarketingCartCalcParams.Create(cart,1,promocodes,cardNumbers);
   info:=FAPI.MarketingCalcCart(params);
   AddToLog(Format('Card Id: %d', [info.Cart.ID]));
@@ -486,6 +497,23 @@ begin
     DisposeGoString(name);
   end;
 end;
+
+procedure TForm1.btnPurchaseReturnClick(Sender: TObject);
+var
+  params: IAPIParams;
+  info: TPurchaseReturnsResponse;
+  cart: TArrayCartReturnsItems;
+begin
+  SetLength(cart, 1);
+  cart[0].Num := '2';
+  cart[0].Quantity := 1;
+  cart[0].Reason := 'Брак';
+  params := TAPIPurchaseReturnsParams.Create(edtOrderNum.Text, cart);
+  info := FAPI.PurchaseReturns(params);
+
+  AddToLog(Format('Purchase returns: return id: %d, purchase: %d', [info.ReturnCart.ID, info.Purchase.ID]));
+end;
+
 
 end.
 

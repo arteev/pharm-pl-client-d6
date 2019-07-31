@@ -378,12 +378,21 @@ object Form1: TForm1
       end
       object btnPurchaseToQueue: TButton
         Left = 16
-        Top = 208
+        Top = 232
         Width = 121
         Height = 25
         Caption = 'Purchase To Queue'
         TabOrder = 9
         OnClick = btnPurchaseToQueueClick
+      end
+      object btnPurchaseReturn: TButton
+        Left = 16
+        Top = 200
+        Width = 97
+        Height = 25
+        Caption = 'Purchase Return'
+        TabOrder = 10
+        OnClick = btnPurchaseReturnClick
       end
     end
   end
