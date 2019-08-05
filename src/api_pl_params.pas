@@ -199,6 +199,8 @@ type
     	ACart:TArrayCartReturnsItems);
     procedure ApplyParams(strings: TStrings); override;
   end;
+  TAPICheckOnline = class(TAPIBaseParams)
+  end;
 
 
 

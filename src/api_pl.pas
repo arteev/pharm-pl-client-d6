@@ -21,6 +21,8 @@ const MethodLogin='login';
 
       MethodPurchaseToQueue = 'purchase_to_queue';
 
+      MethodCheckOnline = 'check_online';
+
 type
 
   PAPIParameters = ^APIParameters;
@@ -105,6 +107,9 @@ type
     procedure PurcaseAddToQueue(RequestParameters: IAPIParams;
     	const AMessageID:string);
 
+    { API Others }
+	function CheckOnline(RequestParameters: IAPIParams):TCheckOnlineResponse;
+
     property Auth:IAuth read GetAuth;
  	property AccessToken:TToken read GetAccessToken;
     property RefreshToken:TToken read GetRefreshToken;
@@ -128,8 +133,6 @@ implementation
 
 procedure TAPIProgramLoyality.PurcaseAddToQueue(
   RequestParameters: IAPIParams;const AMessageID:string);
-var
-  stream : TMemoryStream;
 begin
   StartMethod(MethodPurchaseToQueue);
   FPublisher.Publish(RequestParameters,AMessageID);
@@ -402,6 +405,17 @@ begin
   Result:=FAPIClient.PurchaseReturns(params);
   EndMethod(MethodPurchaseReturns,@Result);
 
+end;
+
+function TAPIProgramLoyality.CheckOnline(
+  RequestParameters: IAPIParams): TCheckOnlineResponse;
+var
+  params: IAPIRequiredParams;
+begin
+  StartMethod(MethodCheckOnline);
+  params := TAPIRequiredParams.Create(ProviderSailPlay,'',RequestParameters);
+  Result:=FAPIClient.CheckOnline(params);
+  EndMethod(MethodCheckOnline,@Result);
 end;
 
 end.

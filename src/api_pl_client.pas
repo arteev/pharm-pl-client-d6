@@ -166,6 +166,12 @@ type
     ReturnCart:TPurchaseReturnCart;
   end;
 
+  TCheckOnlineType = (Unknown=0,Online=1,Offine=2);
+  TCheckOnlineResponse = record
+  	Provider:string;
+    Online:TCheckOnlineType;
+  end;
+
   IAPIClient = interface
 	  // Sessions
     function GetSessionInfo(reqParams: IAPIRequiredParams): TSessionInfo;
@@ -182,6 +188,7 @@ type
     function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseEdit(reqParams: IAPIRequiredParams):TPurchaseEditResponse;
     function PurchaseReturns(reqParams: IAPIRequiredParams):TPurchaseReturnsResponse;
+    function CheckOnline(reqParams: IAPIRequiredParams):TCheckOnlineResponse;
   end;
 
   TAPIClient = class(TAPITemplate, IAPIClient)
@@ -207,6 +214,8 @@ type
     function PurchaseConfirm(reqParams: IAPIRequiredParams):TPurchaseResponse;
     function PurchaseEdit(reqParams: IAPIRequiredParams):TPurchaseEditResponse;
     function PurchaseReturns(reqParams: IAPIRequiredParams):TPurchaseReturnsResponse;
+    //Others
+    function CheckOnline(reqParams: IAPIRequiredParams):TCheckOnlineResponse;
   end;
 
 implementation
@@ -789,6 +798,42 @@ begin
     if not IsNullJSON(payload,'cart_return') then
     	Result.ReturnCart := parseReturnCart(MustField(payload,'cart_return') as TlkJSONobject)
 end;
+
+function TAPIClient.CheckOnline(
+  reqParams: IAPIRequiredParams): TCheckOnlineResponse;
+var
+  js: TlkJsonObject;
+  headers: TStrings;
+  params: TStrings;
+  statusInt: Integer;
+begin
+  headers := TStringList.Create;
+  params := TStringList.Create;
+  try
+    reqParams.ApplyHeaders(headers);
+    reqParams.Extra.ApplyParams(params);
+    js := Client.Get(URL + '/pl/check/online', params, headers);
+  finally
+    params.Free;
+    headers.Free;
+  end;
+  try
+    if IsError(js) then
+      raise ExceptionApiCall.CreateFromResponse(TErrorResponse.FromJSON(js));
+	Result.Provider := GetValueJSON(js,'provider','');
+    statusInt := StrToIntDef(GetValueJSON(js,'online',0),0);
+    case statusInt of
+      0: Result.Online := Unknown ;
+      1: Result.Online := Online;
+      2: Result.Online := Offine;
+    else
+    	raise Exception.CreateFmt('unknown status online: %d',[statusInt]);
+    end;
+  finally
+    js.Free;
+  end;
+end;
+
 
 end.
 

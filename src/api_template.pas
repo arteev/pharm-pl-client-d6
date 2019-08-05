@@ -61,7 +61,8 @@ end;
 
 procedure TAPIRequiredParams.ApplyHeaders(strings: TStrings);
 begin
-  strings.Values['token'] := FToken;
+  if FToken<>'' then
+  	strings.Values['token'] := FToken;
   strings.Values['provider'] := FProvider;
 end;
 

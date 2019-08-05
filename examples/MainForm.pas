@@ -69,6 +69,7 @@ type
     lblSessionInfo: TLabel;
     btnPurchaseToQueue: TButton;
     btnPurchaseReturn: TButton;
+    btnCheckOnline: TButton;
     procedure btnCreateClick(Sender: TObject);
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormDestroy(Sender: TObject);
@@ -93,6 +94,7 @@ type
     procedure btnPurchaseToQueueClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure btnPurchaseReturnClick(Sender: TObject);
+    procedure btnCheckOnlineClick(Sender: TObject);
   private
     { Private declarations }
     FLogID: Integer;
@@ -514,6 +516,18 @@ begin
   AddToLog(Format('Purchase returns: return id: %d, purchase: %d', [info.ReturnCart.ID, info.Purchase.ID]));
 end;
 
+var
+  StatusOnline: array[TCheckOnlineType] of string = ('Unknown', 'Online', 'Offline');
+
+procedure TForm1.btnCheckOnlineClick(Sender: TObject);
+var
+  info: TCheckOnlineResponse;
+  params: TAPICheckOnline;
+begin
+  params := TAPICheckOnline.Create;
+  info := FAPI.CheckOnline(params);
+  AddToLog(Format('Check Online:%s', [StatusOnline[info.Online]]));
+end;
 
 end.
 

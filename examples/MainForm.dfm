@@ -105,8 +105,8 @@ object Form1: TForm1
     Top = 160
     Width = 569
     Height = 305
-    ActivePage = tsPurchases
-    TabIndex = 3
+    ActivePage = tsOthers
+    TabIndex = 1
     TabOrder = 1
     object tsAuth: TTabSheet
       Caption = 'Auth'
@@ -149,6 +149,15 @@ object Form1: TForm1
         Caption = 'Session info'
         TabOrder = 0
         OnClick = btnSessionClick
+      end
+      object btnCheckOnline: TButton
+        Left = 16
+        Top = 40
+        Width = 97
+        Height = 25
+        Caption = 'Check Online'
+        TabOrder = 1
+        OnClick = btnCheckOnlineClick
       end
     end
     object tsClient: TTabSheet
